@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuansa AI Editor (Final UI + NMT Logic)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none !important; }
+
+        /* Dropdown Menu Fixed */
+        #synonym-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            z-index: 999999;
+            width: 320px;
+            max-height: 350px;
+            overflow: hidden;
+            display: none;
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+        }
+        #synonym-menu.show { opacity: 1; transform: scale(1); }
+
+        /* Item Tesaurus */
+        .synonym-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: all 0.1s;
+        }
+        .synonym-row:hover { background-color: #eff6ff; padding-left: 20px; }
+        .synonym-word { font-weight: 600; color: #334155; font-size: 14px; flex-grow: 1; }
+        .pos-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+
+        /* LIVE EDITOR TYPOGRAPHY (Sesuai File Upload) */
+        .natural-text { 
+            white-space: pre-wrap; 
+            line-height: 1.8; 
+            color: #334155; 
+            padding-bottom: 80px;
+            outline: none; 
+        }
+        
+        /* Kata Interaktif */
+        .interactive-word { 
+            display: inline-block; 
+            cursor: pointer; 
+            border-bottom: 1px dotted #94a3b8; 
+            transition: all 0.2s; 
+            border-radius: 3px; 
+            padding: 0 1px;
+        }
+        .interactive-word:hover { background-color: #dbeafe; color: #1e40af; border-bottom: 2px solid #2563eb; }
+        
+        /* Efek Flash Nuansa AI */
+        .interactive-word.context-changed {
+            animation: flashGreen 1.5s ease-out;
+            background-color: #dcfce7;
+            border-bottom: 1px solid #16a34a;
+            color: #15803d;
+            font-weight: 600;
+        }
+        @keyframes flashGreen {
+            0% { background-color: #22c55e; color: white; }
+            100% { background-color: #dcfce7; color: #15803d; }
+        }
+
+        /* Loading Spinner */
+        .loader { width: 14px; height: 14px; border: 2px solid #e2e8f0; border-top: 2px solid #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* UI Utilities */
+        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
+        .toggle-checkbox { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+        .toggle-label { width: 36px; height: 20px; background-color: #cbd5e1; display: block; border-radius: 100px; position: relative; cursor: pointer; transition: background-color 0.2s; }
+        .toggle-label:after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background-color: #fff; border-radius: 90px; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .toggle-checkbox:checked + .toggle-label:after { left: calc(100% - 2px); transform: translateX(-100%); }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center" onclick="closeDropdownGlobal(event)">
+
+    <div class="w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative">
+        
+        <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-900/50"><i class="fas fa-edit"></i></div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Nuansa AI Editor</h1>
+                    <p class="text-[11px] text-slate-400">Live Edit, Contextual Fix & Grammar AI</p>
+                </div>
+            </div>
+            <div id="status-bar" class="text-xs font-mono text-green-400 opacity-0 transition-opacity"><i class="fas fa-check-circle"></i> Siap</div>
+        </div>
+
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row gap-4 items-center">
+            <div class="relative w-full md:w-5/12 group">
+                <label class="absolute -top-2 left-3 bg-slate-50 px-1 text-[10px] font-bold text-slate-400 z-10">DARI BAHASA</label>
+                <select id="sourceLang" onchange="resetAndTranslate()" class="w-full p-3 pl-4 pr-10 rounded-lg border border-slate-300 bg-white font-semibold text-slate-700 outline-none focus:border-blue-500 transition cursor-pointer relative z-0">
+                    <option value="auto">✨ Deteksi Otomatis</option>
+                    <option value="fr">Prancis (Français)</option>
+                    <option value="en">Inggris (English)</option>
+                    <option value="id">Indonesia</option>
+                    <option value="jw">Jawa</option>
+                    <option value="ja">Jepang</option>
+                    <option value="ar">Arab</option>
+                    <option value="de">Jerman</option>
+                    <option value="es">Spanyol</option>
+                </select>
+                <div id="detected-badge" class="hidden absolute right-8 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded border border-blue-200 pointer-events-none z-10">TERDETEKSI</div>
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"><i class="fas fa-chevron-down text-xs"></i></div>
+            </div>
+            <i class="fas fa-arrow-right text-slate-300 hidden md:block"></i>
+            <div class="relative w-full md:w-5/12">
+                <label class="absolute -top-2 left-3 bg-slate-50 px-1 text-[10px] font-bold text-slate-400 z-10">KE BAHASA</label>
+                <select id="targetLang" onchange="resetAndTranslate()" class="w-full p-3 pl-4 pr-10 rounded-lg border border-slate-300 bg-white font-semibold text-slate-700 outline-none focus:border-blue-500 transition cursor-pointer relative z-0">
+                    <option value="id" selected>Indonesia</option>
+                    <option value="en">Inggris (English)</option>
+                    <option value="fr">Prancis (Français)</option>
+                    <option value="jw">Jawa</option>
+                    <option value="ja">Jepang</option>
+                    <option value="ar">Arab</option>
+                    <option value="de">Jerman</option>
+                    <option value="es">Spanyol</option>
+                </select>
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"><i class="fas fa-chevron-down text-xs"></i></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 h-[550px] divide-x divide-slate-100">
+            <div class="p-6 flex flex-col bg-white group">
+                <textarea id="input-text" class="flex-1 w-full text-lg text-slate-800 placeholder-slate-300 bg-transparent outline-none resize-none leading-relaxed" placeholder="Ketik teks sumber..." oninput="handleSourceInput()"></textarea>
+                <div class="flex justify-between items-center mt-2 pt-2 border-t border-dashed border-slate-100 opacity-50 group-hover:opacity-100 transition">
+                    <button onclick="document.getElementById('input-text').value=''; handleSourceInput()" class="text-xs text-red-400 hover:text-red-600 flex items-center gap-1"><i class="fas fa-trash"></i> Hapus</button>
+                    <span id="char-count" class="text-xs text-slate-400">0 chars</span>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50/50 relative flex flex-col group">
+                
+                <div id="ai-status" class="hidden absolute top-4 right-6 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-100 z-10">
+                    <div class="loader w-3 h-3"></div>
+                    <span id="status-text" class="text-[10px] font-bold text-blue-600">AI MEMPROSES...</span>
+                </div>
+
+                <div id="output-editor" 
+                     class="natural-text flex-1 overflow-y-auto pr-2" 
+                     contenteditable="true" 
+                     oninput="handleManualEdit()"
+                     onclick="handleEditorClick(event)">
+                     <span class="text-slate-400 italic pointer-events-none">Terjemahan muncul di sini (Bisa diedit)...</span>
+                </div>
+
+                <div class="absolute bottom-4 right-6 flex gap-2">
+                     <button onclick="copyResult()" class="text-xs bg-white border shadow-sm px-3 py-2 rounded-lg text-blue-600 font-bold hover:bg-blue-50 transition"><i class="fas fa-copy mr-1"></i> Salin</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 px-6 py-4 border-t border-blue-100">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="bg-blue-200 p-1.5 rounded text-blue-800"><i class="fas fa-book"></i></div>
+                    <div><h3 class="text-sm font-bold text-blue-900">Glosarium Contextual</h3><p class="text-[10px] text-blue-500">Constraint Decoding aktif.</p></div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase">Auto-Fix</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input type="checkbox" name="toggle" id="glossary-toggle" class="toggle-checkbox" checked onclick="triggerTranslationProcess()"/>
+                        <label for="glossary-toggle" class="toggle-label"></label>
+                    </div>
+                </div>
+            </div>
+            <div id="glossary-badges" class="flex flex-wrap gap-2 text-xs min-h-[30px] items-center">
+                <span class="text-slate-400 italic text-xs pl-1">Belum ada preferensi kata.</span>
+            </div>
+        </div>
+
+        <div id="synonym-menu"></div>
+    </div>
+
+    <script>
+        let typingTimer;
+        let manualEditTimer;
+        let glossary = {}; 
+        let tempEdits = {}; 
+        
+        // --- 1. HANDLING INPUT SUMBER ---
+        function handleSourceInput() {
+            const text = document.getElementById('input-text').value;
+            document.getElementById('char-count').innerText = text.length + " chars";
+            clearTimeout(typingTimer);
+            if(text.trim()) typingTimer = setTimeout(triggerTranslationProcess, 500);
+        }
+
+        function resetAndTranslate() { tempEdits = {}; triggerTranslationProcess(); }
+
+        // --- 2. HANDLING INPUT MANUAL DI TARGET ---
+        function handleManualEdit() {
+            closeDropdown();
+            clearTimeout(manualEditTimer);
+            showStatus("MENUNGGU KETIKAN...", false);
+            manualEditTimer = setTimeout(() => {
+                const currentText = document.getElementById('output-editor').innerText;
+                triggerContextualFix(currentText);
+            }, 1500);
+        }
+
+        function handleEditorClick(e) {
+            if (e.target.classList.contains('interactive-word')) {
+                const word = e.target.dataset.original || e.target.innerText;
+                openDropdown(e.target, word, event);
+            }
+        }
+
+        // --- 3. CORE TRANSLATION PROCESS (NMT + CONSTRAINT) ---
+        async function triggerTranslationProcess() {
+            const text = document.getElementById('input-text').value;
+            if(!text.trim()) {
+                document.getElementById('output-editor').innerHTML = '<span class="text-slate-400 italic pointer-events-none">Terjemahan muncul di sini...</span>';
+                return;
+            }
+
+            showStatus("DECODING...", true);
+            const sl = document.getElementById('sourceLang').value;
+            const tl = document.getElementById('targetLang').value;
+
+            try {
+                // A. Translasi Utama
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
+                const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const res = await fetch(proxy);
+                const data = await res.json();
+
+                if (sl === 'auto' && data[2]) {
+                    const langMap = {'fr':'PRANCIS', 'en':'INGGRIS', 'id':'INDONESIA', 'jw':'JAWA', 'ja':'JEPANG', 'ar':'ARAB', 'de':'JERMAN'};
+                    const detected = langMap[data[2]] || data[2].toUpperCase();
+                    document.getElementById('detected-badge').innerText = detected;
+                    document.getElementById('detected-badge').classList.remove('hidden');
+                } else {
+                    document.getElementById('detected-badge').classList.add('hidden');
+                }
+
+                let translatedText = "";
+                if (data && data[0]) data[0].forEach(s => { if (s[0]) translatedText += s[0]; });
+
+                // B. CONSTRAINED DECODING (Glosarium & Edits)
+                let activeEdits = { ...tempEdits };
+                if (document.getElementById('glossary-toggle').checked) {
+                    activeEdits = { ...glossary, ...tempEdits };
+                }
+
+                const hasEdits = Object.keys(activeEdits).length > 0;
+
+                if (hasEdits) {
+                    // 1. Terapkan Constraint
+                    Object.keys(activeEdits).forEach(key => {
+                        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+                        translatedText = translatedText.replace(regex, activeEdits[key]);
+                    });
+
+                    // 2. Recalculate Context (Nuansa AI)
+                    showStatus("MENYESUAIKAN KONTEKS...", true);
+                    
+                    const fixUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=${tl}&dt=t&q=${encodeURIComponent(translatedText)}`;
+                    const fixProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(fixUrl)}`;
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 1200); 
+
+                    try {
+                        const fixRes = await fetch(fixProxy, { signal: controller.signal });
+                        const fixData = await fixRes.json();
+                        clearTimeout(timeoutId);
+                        
+                        let fixedText = "";
+                        if (fixData && fixData[0]) fixData[0].forEach(s => { if (s[0]) fixedText += s[0]; });
+                        translatedText = fixedText;
+                    } catch (err) { }
+                }
+
+                renderOutput(translatedText, false);
+                hideStatus();
+
+            } catch (e) {
+                console.error(e);
+                hideStatus();
+            }
+        }
+
+        // --- 4. NUANSA AI (Contextual Grammar Fixer) ---
+        async function triggerContextualFix(textToFix) {
+            showStatus("MENATA TATA BAHASA...", true);
+            const tl = document.getElementById('targetLang').value;
+
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=${tl}&dt=t&q=${encodeURIComponent(textToFix)}`;
+                const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                
+                const res = await fetch(proxy);
+                const data = await res.json();
+                
+                let fixedText = "";
+                if (data && data[0]) data[0].forEach(s => { if (s[0]) fixedText += s[0]; });
+
+                renderOutput(fixedText, true);
+                hideStatus();
+
+            } catch (e) {
+                console.error("Grammar fix failed", e);
+                renderOutput(textToFix, false); 
+                hideStatus();
+            }
+        }
+
+        // --- 5. RENDERING ---
+        function renderOutput(text, isFixing) {
+            const container = document.getElementById('output-editor');
+            const editClass = isFixing ? 'flash-fix' : '';
+            const parts = text.split(/([^\w\u00C0-\u017F]+)/g); 
+            
+            // Get edited values for highlighting
+            let activeEdits = { ...tempEdits };
+            if (document.getElementById('glossary-toggle').checked) {
+                activeEdits = { ...glossary, ...tempEdits };
+            }
+            const editedValues = Object.values(activeEdits).map(v => v.toLowerCase());
+
+            let html = '';
+            parts.forEach(part => {
+                if (!part.trim() || part.match(/[^\w\u00C0-\u017F]/)) {
+                    html += part;
+                } else {
+                    let isEdited = editedValues.includes(part.toLowerCase());
+                    const safeWord = part.replace(/"/g, '&quot;');
+                    const extraClass = isEdited ? 'context-changed' : editClass;
+                    html += `<span class="interactive-word ${extraClass}" data-original="${safeWord}">${part}</span>`;
+                }
+            });
+
+            container.innerHTML = html;
+            if(isFixing) placeCaretAtEnd(container);
+        }
+
+        function placeCaretAtEnd(el) {
+            el.focus();
+            if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
+                var range = document.createRange();
+                range.selectNodeContents(el);
+                range.collapse(false);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+
+        // --- 6. THESAURUS (PIVOT STRATEGY / NMT CANDIDATES) ---
+        async function openDropdown(element, word, event) {
+            event.stopPropagation();
+            const menu = document.getElementById('synonym-menu');
+            const tl = document.getElementById('targetLang').value; 
+            
+            const rect = element.getBoundingClientRect();
+            menu.style.display = 'block';
+            let leftPos = rect.left;
+            if (rect.left > window.innerWidth / 2) leftPos = rect.right - 320;
+            if (leftPos < 10) leftPos = 10;
+            menu.style.left = leftPos + 'px';
+            menu.style.top = (rect.bottom + 5) + 'px';
+            requestAnimationFrame(() => menu.classList.add('show'));
+
+            menu.innerHTML = `<div class="p-6 text-center"><div class="loader mx-auto mb-2"></div><div class="text-[10px] text-slate-400">Mencari Alternatif...</div></div>`;
+
+            try {
+                // LOGIKA PIVOT: Translate Word (Target) -> English -> Target (Alternatives)
+                const pivotUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=en&dt=t&q=${encodeURIComponent(word)}`;
+                const pivotProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(pivotUrl)}`;
+                const pivotRes = await fetch(pivotProxy);
+                const pivotData = await pivotRes.json();
+                
+                const pivotWord = (pivotData[0] && pivotData[0][0]) ? pivotData[0][0][0] : word;
+
+                // Get NMT Candidates
+                const altUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tl}&dt=at&dt=bd&q=${encodeURIComponent(pivotWord)}`;
+                const altProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(altUrl)}`;
+                const altRes = await fetch(altProxy);
+                const altData = await altRes.json();
+
+                let candidates = [];
+                // Data 1 (Dictionary)
+                if (altData[1]) {
+                    altData[1].forEach(g => {
+                        const pos = g[0];
+                        g[1].forEach(cand => candidates.push({ word: cand, type: pos }));
+                    });
+                }
+
+                if (candidates.length > 0) {
+                    renderSynonymList(menu, word, tl, candidates);
+                } else {
+                    renderManualMode(menu, word, tl, "Tidak ada variasi ditemukan.");
+                }
+            } catch (e) {
+                renderManualMode(menu, word, tl, null);
+            }
+        }
+
+        function renderSynonymList(menu, word, lang, list) {
+            let html = `
+                <div class="sticky top-0 bg-white z-10 border-b border-slate-100 p-3">
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-2 uppercase"><span>Edit: "${word}"</span><span>${lang}</span></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="manual-input" placeholder="Manual..." class="flex-1 text-sm border rounded px-2 py-1 outline-none focus:border-blue-500">
+                        <button onclick="applyChange('${word}', document.getElementById('manual-input').value)" class="bg-blue-100 text-blue-600 border border-blue-200 px-3 rounded hover:bg-blue-600 hover:text-white transition"><i class="fas fa-check"></i></button>
+                        <button onclick="addToGlossary('${word}', document.getElementById('manual-input').value)" class="bg-green-100 text-green-600 border border-green-200 px-3 rounded hover:bg-green-600 hover:text-white transition"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+                <div class="overflow-y-auto max-h-[220px]">
+            `;
+
+            const unique = [];
+            const seen = new Set();
+            list.forEach(i => { if(!seen.has(i.word.toLowerCase()) && i.word.toLowerCase() !== word.toLowerCase()) { seen.add(i.word.toLowerCase()); unique.push(i); }});
+
+            unique.slice(0, 15).forEach(item => {
+                html += `
+                    <div class="synonym-row group">
+                        <span class="synonym-word" onclick="applyChange('${word}', '${item.word}')">
+                            ${item.word} <span class="pos-badge">${item.type}</span>
+                        </span>
+                        <button class="text-slate-300 hover:text-blue-600 px-2 rounded" onclick="addToGlossary('${word}', '${item.word}')"><i class="fas fa-plus"></i></button>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            menu.innerHTML = html;
+            setTimeout(() => document.getElementById('manual-input').focus(), 100);
+        }
+
+        // --- TOMBOL PLUS HADIR KEMBALI ---
+        function renderManualMode(menu, word, lang, msg) {
+            menu.innerHTML = `
+                <div class="p-5 flex flex-col justify-center h-full">
+                    <div class="mb-2 text-xs text-slate-400 italic text-center">${msg}</div>
+                    <div class="flex gap-2">
+                        <input type="text" id="manual-input" placeholder="Input Manual..." class="flex-1 w-full text-sm border rounded px-3 py-2 outline-none">
+                        <button onclick="applyChange('${word}', document.getElementById('manual-input').value)" class="bg-blue-100 text-blue-600 border border-blue-200 px-3 rounded hover:bg-blue-600 hover:text-white transition" title="Ganti Sementara"><i class="fas fa-check"></i></button>
+                        <button onclick="addToGlossary('${word}', document.getElementById('manual-input').value)" class="bg-green-100 text-green-600 border border-green-200 px-3 rounded hover:bg-green-600 hover:text-white transition" title="Simpan Permanen"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>`;
+            setTimeout(() => document.getElementById('manual-input').focus(), 100);
+        }
+
+        // --- 7. APPLY CHANGES (CONSTRAINT DECODING) ---
+        function applyChange(oldWord, newWord) {
+            if(!newWord) return;
+            // Kunci kata ini di memori sementara (Constraint)
+            tempEdits[oldWord.toLowerCase()] = newWord;
+            
+            closeDropdown();
+            // Trigger ulang penerjemahan dari awal untuk "Constraint Decoding"
+            // Ini memastikan kalimat sekitarnya menyesuaikan dengan kata baru
+            triggerTranslationProcess();
+        }
+
+        function addToGlossary(oldWord, newWord) {
+            if(!newWord) return;
+            glossary[oldWord.toLowerCase()] = newWord;
+            renderBadges();
+            if (tempEdits[oldWord.toLowerCase()]) delete tempEdits[oldWord.toLowerCase()];
+            triggerTranslationProcess(); 
+            closeDropdown();
+        }
+
+        // --- UTILS (UI SESUAI FILE UPLOAD) ---
+        function showStatus(msg, showLoader) {
+            const el = document.getElementById('ai-status');
+            el.classList.remove('hidden');
+            document.getElementById('status-text').innerText = msg;
+            el.querySelector('.loader').style.display = showLoader ? 'block' : 'none';
+        }
+        function hideStatus() { document.getElementById('ai-status').classList.add('hidden'); }
+        function deleteGlossaryItem(key) { delete glossary[key]; renderBadges(); triggerTranslationProcess(); }
+        
+        function renderBadges() {
+            const container = document.getElementById('glossary-badges');
+            const keys = Object.keys(glossary);
+            if (keys.length === 0) { container.innerHTML = '<span class="text-slate-400 italic text-xs pl-1">Belum ada kata disimpan.</span>'; return; }
+            container.innerHTML = keys.map(key => `
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border border-blue-200 text-blue-700 shadow-sm text-[11px] animate-[fadeIn_0.3s]">
+                    <span class="font-bold text-slate-600">${key}</span>
+                    <i class="fas fa-arrow-right text-[8px] text-blue-300"></i>
+                    <span class="font-bold text-blue-600 border-b border-blue-200">${glossary[key]}</span>
+                    <button onclick="deleteGlossaryItem('${key}')" class="ml-1 text-slate-300 hover:text-red-500 w-4 h-4 flex items-center justify-center"><i class="fas fa-times"></i></button>
+                </span>
+            `).join('');
+        }
+
+        function closeDropdown() { const m = document.getElementById('synonym-menu'); m.classList.remove('show'); setTimeout(() => { if(!m.classList.contains('show')) m.style.display = 'none'; }, 150); }
+        function closeDropdownGlobal(e) { if (!e.target.closest('.interactive-word') && !e.target.closest('#synonym-menu')) { closeDropdown(); } }
+        function copyResult() {
+            const text = document.getElementById('output-editor').innerText; navigator.clipboard.writeText(text);
+            const btn = document.querySelector('button[onclick="copyResult()"]'); const ori = btn.innerHTML; 
+            btn.innerHTML = '<i class="fas fa-check"></i> Tersalin'; setTimeout(() => btn.innerHTML = ori, 2000);
+        }
+    </script>
+</body>
+</html>
