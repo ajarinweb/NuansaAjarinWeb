@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuansa AI Editor (Final UI + NMT Logic)</title>
+    <title>Nuansa AI Editor (DeepL Logic)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -18,8 +18,8 @@
             box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.25);
             border-radius: 12px;
             z-index: 999999;
-            width: 320px;
-            max-height: 350px;
+            width: 340px;
+            max-height: 380px;
             overflow: hidden;
             display: none;
             opacity: 0;
@@ -37,7 +37,7 @@
         .synonym-word { font-weight: 600; color: #334155; font-size: 14px; flex-grow: 1; }
         .pos-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
 
-        /* LIVE EDITOR TYPOGRAPHY (Sesuai File Upload) */
+        /* LIVE EDITOR TYPOGRAPHY */
         .natural-text { 
             white-space: pre-wrap; 
             line-height: 1.8; 
@@ -57,7 +57,7 @@
         }
         .interactive-word:hover { background-color: #dbeafe; color: #1e40af; border-bottom: 2px solid #2563eb; }
         
-        /* Efek Flash Nuansa AI */
+        /* Efek Flash Nuansa AI (Constraint Decoding) */
         .interactive-word.context-changed {
             animation: flashGreen 1.5s ease-out;
             background-color: #dcfce7;
@@ -89,10 +89,10 @@
         
         <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-900/50"><i class="fas fa-edit"></i></div>
+                <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-900/50"><i class="fas fa-brain"></i></div>
                 <div>
                     <h1 class="font-bold text-lg leading-tight">Nuansa AI Editor</h1>
-                    <p class="text-[11px] text-slate-400">Live Edit, Contextual Fix & Grammar AI</p>
+                    <p class="text-[11px] text-slate-400">Contextual Alignment & NMT Alternatives</p>
                 </div>
             </div>
             <div id="status-bar" class="text-xs font-mono text-green-400 opacity-0 transition-opacity"><i class="fas fa-check-circle"></i> Siap</div>
@@ -103,8 +103,8 @@
                 <label class="absolute -top-2 left-3 bg-slate-50 px-1 text-[10px] font-bold text-slate-400 z-10">DARI BAHASA</label>
                 <select id="sourceLang" onchange="resetAndTranslate()" class="w-full p-3 pl-4 pr-10 rounded-lg border border-slate-300 bg-white font-semibold text-slate-700 outline-none focus:border-blue-500 transition cursor-pointer relative z-0">
                     <option value="auto">✨ Deteksi Otomatis</option>
-                    <option value="fr">Prancis (Français)</option>
                     <option value="en">Inggris (English)</option>
+                    <option value="fr">Prancis (Français)</option>
                     <option value="id">Indonesia</option>
                     <option value="jw">Jawa</option>
                     <option value="ja">Jepang</option>
@@ -195,7 +195,7 @@
             const text = document.getElementById('input-text').value;
             document.getElementById('char-count').innerText = text.length + " chars";
             clearTimeout(typingTimer);
-            if(text.trim()) typingTimer = setTimeout(triggerTranslationProcess, 500);
+            if(text.trim()) typingTimer = setTimeout(triggerTranslationProcess, 600);
         }
 
         function resetAndTranslate() { tempEdits = {}; triggerTranslationProcess(); }
@@ -208,7 +208,7 @@
             manualEditTimer = setTimeout(() => {
                 const currentText = document.getElementById('output-editor').innerText;
                 triggerContextualFix(currentText);
-            }, 1500);
+            }, 1200);
         }
 
         function handleEditorClick(e) {
@@ -218,7 +218,7 @@
             }
         }
 
-        // --- 3. CORE TRANSLATION PROCESS (NMT + CONSTRAINT) ---
+        // --- 3. CORE TRANSLATION PROCESS ---
         async function triggerTranslationProcess() {
             const text = document.getElementById('input-text').value;
             if(!text.trim()) {
@@ -226,7 +226,7 @@
                 return;
             }
 
-            showStatus("DECODING...", true);
+            showStatus("MENERJEMAHKAN...", true);
             const sl = document.getElementById('sourceLang').value;
             const tl = document.getElementById('targetLang').value;
 
@@ -249,7 +249,7 @@
                 let translatedText = "";
                 if (data && data[0]) data[0].forEach(s => { if (s[0]) translatedText += s[0]; });
 
-                // B. CONSTRAINED DECODING (Glosarium & Edits)
+                // B. CONSTRAINED DECODING (Penerapan Glosarium & Edit)
                 let activeEdits = { ...tempEdits };
                 if (document.getElementById('glossary-toggle').checked) {
                     activeEdits = { ...glossary, ...tempEdits };
@@ -258,20 +258,24 @@
                 const hasEdits = Object.keys(activeEdits).length > 0;
 
                 if (hasEdits) {
-                    // 1. Terapkan Constraint
+                    // 1. Terapkan Constraint (Replace Kata)
                     Object.keys(activeEdits).forEach(key => {
                         const regex = new RegExp(`\\b${key}\\b`, 'gi');
                         translatedText = translatedText.replace(regex, activeEdits[key]);
                     });
 
-                    // 2. Recalculate Context (Nuansa AI)
-                    showStatus("MENYESUAIKAN KONTEKS...", true);
+                    // 2. NUANSA AI (SMOOTHING)
+                    // PENTING: Untuk tone lebih alami, kita gunakan teknik 'Self-Correction' dengan sl=auto.
+                    // Ini membuat Google melihat kalimat hasil edit sebagai "source" baru dan merapikannya.
+                    // Contoh: "Menaiki hubungan" (kaku) -> "Meningkatkan hubungan" (natural).
                     
-                    const fixUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=${tl}&dt=t&q=${encodeURIComponent(translatedText)}`;
+                    showStatus("MENYESUAIKAN NUANSA...", true);
+                    
+                    const fixUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(translatedText)}`;
                     const fixProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(fixUrl)}`;
                     
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 1200); 
+                    const timeoutId = setTimeout(() => controller.abort(), 1500); 
 
                     try {
                         const fixRes = await fetch(fixProxy, { signal: controller.signal });
@@ -280,8 +284,13 @@
                         
                         let fixedText = "";
                         if (fixData && fixData[0]) fixData[0].forEach(s => { if (s[0]) fixedText += s[0]; });
-                        translatedText = fixedText;
-                    } catch (err) { }
+                        
+                        // Hanya gunakan hasil fix jika tidak kosong
+                        if(fixedText.trim()) translatedText = fixedText;
+                        
+                    } catch (err) {
+                        // Fail silently, use raw translation
+                    }
                 }
 
                 renderOutput(translatedText, false);
@@ -293,13 +302,14 @@
             }
         }
 
-        // --- 4. NUANSA AI (Contextual Grammar Fixer) ---
+        // --- 4. NUANSA AI (Contextual Grammar Fixer Triggered Manually) ---
         async function triggerContextualFix(textToFix) {
             showStatus("MENATA TATA BAHASA...", true);
             const tl = document.getElementById('targetLang').value;
 
             try {
-                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=${tl}&dt=t&q=${encodeURIComponent(textToFix)}`;
+                // Gunakan sl=auto untuk efek "Paraphrasing/Smoothing"
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(textToFix)}`;
                 const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 
                 const res = await fetch(proxy);
@@ -324,7 +334,6 @@
             const editClass = isFixing ? 'flash-fix' : '';
             const parts = text.split(/([^\w\u00C0-\u017F]+)/g); 
             
-            // Get edited values for highlighting
             let activeEdits = { ...tempEdits };
             if (document.getElementById('glossary-toggle').checked) {
                 activeEdits = { ...glossary, ...tempEdits };
@@ -359,7 +368,7 @@
             }
         }
 
-        // --- 6. THESAURUS (PIVOT STRATEGY / NMT CANDIDATES) ---
+        // --- 6. THESAURUS (DEEP SOURCE PIVOT) ---
         async function openDropdown(element, word, event) {
             event.stopPropagation();
             const menu = document.getElementById('synonym-menu');
@@ -374,28 +383,31 @@
             menu.style.top = (rect.bottom + 5) + 'px';
             requestAnimationFrame(() => menu.classList.add('show'));
 
-            menu.innerHTML = `<div class="p-6 text-center"><div class="loader mx-auto mb-2"></div><div class="text-[10px] text-slate-400">Mencari Alternatif...</div></div>`;
+            menu.innerHTML = `<div class="p-6 text-center"><div class="loader mx-auto mb-2"></div><div class="text-[10px] text-slate-400">Mencari Alternatif Sumber...</div></div>`;
 
             try {
-                // LOGIKA PIVOT: Translate Word (Target) -> English -> Target (Alternatives)
+                // LOGIKA: MENCARI ALTERNATIF DARI MAKNA SUMBER (BUKAN HANYA TERJEMAHAN)
+                // 1. Translate Kata Target -> Inggris (Pivot) untuk dapat 'Root Meaning'.
                 const pivotUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=en&dt=t&q=${encodeURIComponent(word)}`;
                 const pivotProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(pivotUrl)}`;
                 const pivotRes = await fetch(pivotProxy);
                 const pivotData = await pivotRes.json();
                 
-                const pivotWord = (pivotData[0] && pivotData[0][0]) ? pivotData[0][0][0] : word;
+                const rootMeaning = (pivotData[0] && pivotData[0][0]) ? pivotData[0][0][0] : word;
 
-                // Get NMT Candidates
-                const altUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tl}&dt=at&dt=bd&q=${encodeURIComponent(pivotWord)}`;
+                // 2. Minta Alternative Translations (dt=at) dari Root Meaning (Inggris) ke Target Bahasa.
+                // Ini akan memberikan variasi kata dalam Bahasa Target yang memiliki makna sama dengan Root Meaning.
+                const altUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tl}&dt=at&dt=bd&q=${encodeURIComponent(rootMeaning)}`;
                 const altProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(altUrl)}`;
                 const altRes = await fetch(altProxy);
                 const altData = await altRes.json();
 
                 let candidates = [];
-                // Data 1 (Dictionary)
+                // Prioritas 1: Alternative Translations (Data[5] biasanya, tapi di API free sering di Data[1] dictionary)
                 if (altData[1]) {
                     altData[1].forEach(g => {
                         const pos = g[0];
+                        // Filter agar tidak menampilkan kata pivot Inggrisnya, tapi kata Targetnya
                         g[1].forEach(cand => candidates.push({ word: cand, type: pos }));
                     });
                 }
@@ -413,7 +425,7 @@
         function renderSynonymList(menu, word, lang, list) {
             let html = `
                 <div class="sticky top-0 bg-white z-10 border-b border-slate-100 p-3">
-                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-2 uppercase"><span>Edit: "${word}"</span><span>${lang}</span></div>
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-2 uppercase"><span>Ganti: "${word}"</span><span>${lang}</span></div>
                     <div class="flex gap-2">
                         <input type="text" id="manual-input" placeholder="Manual..." class="flex-1 text-sm border rounded px-2 py-1 outline-none focus:border-blue-500">
                         <button onclick="applyChange('${word}', document.getElementById('manual-input').value)" class="bg-blue-100 text-blue-600 border border-blue-200 px-3 rounded hover:bg-blue-600 hover:text-white transition"><i class="fas fa-check"></i></button>
@@ -442,7 +454,6 @@
             setTimeout(() => document.getElementById('manual-input').focus(), 100);
         }
 
-        // --- TOMBOL PLUS HADIR KEMBALI ---
         function renderManualMode(menu, word, lang, msg) {
             menu.innerHTML = `
                 <div class="p-5 flex flex-col justify-center h-full">
@@ -456,7 +467,7 @@
             setTimeout(() => document.getElementById('manual-input').focus(), 100);
         }
 
-        // --- 7. APPLY CHANGES (CONSTRAINT DECODING) ---
+        // --- 7. APPLY CHANGES & TRIGGER NUANSA AI ---
         function applyChange(oldWord, newWord) {
             if(!newWord) return;
             // Kunci kata ini di memori sementara (Constraint)
@@ -477,7 +488,7 @@
             closeDropdown();
         }
 
-        // --- UTILS (UI SESUAI FILE UPLOAD) ---
+        // --- UTILS ---
         function showStatus(msg, showLoader) {
             const el = document.getElementById('ai-status');
             el.classList.remove('hidden');
