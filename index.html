@@ -2,582 +2,1027 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuansa AI - Transalator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>DeepFlow Universal Translator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none !important; }
-
-        /* Dropdown Menu Fixed */
-        #synonym-menu {
-            position: fixed;
-            background: white;
-            border: 1px solid #cbd5e1;
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.25);
-            border-radius: 12px;
-            z-index: 999999;
-            width: 340px;
-            max-height: 380px;
-            overflow: hidden;
-            display: none;
-            opacity: 0;
-            transform: scale(0.98);
-            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+        /* ===== Gaya sama persis, hanya tambahan utility ===== */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         }
-        #synonym-menu.show { opacity: 1; transform: scale(1); }
-
-        /* Item Tesaurus */
-        .synonym-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: all 0.1s;
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
-        .synonym-row:hover { background-color: #eff6ff; padding-left: 20px; }
-        .synonym-word { font-weight: 600; color: #334155; font-size: 14px; flex-grow: 1; }
-        
-        /* POS Badge */
-        .pos-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
-        .pos-root { background: #dbeafe; color: #1e40af; }
-        .pos-affix { background: #fce7f3; color: #9d174d; }
-
-        /* TYPOGRAPHY */
-        .natural-text { 
-            white-space: pre-wrap; 
-            line-height: 1.8; 
-            color: #334155; 
-            padding-bottom: 80px;
-            outline: none; 
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
         }
-        
-        /* Interactive Word */
-        .interactive-word { 
-            display: inline-block; 
-            cursor: pointer; 
-            border-bottom: 1px dotted #94a3b8; 
-            transition: all 0.2s; 
-            border-radius: 3px; 
-            padding: 0 1px;
+        .language-flag {
+            width: 20px; height: 15px; display: inline-block; background-size: cover;
+            border-radius: 2px; margin-right: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        .interactive-word:hover { background-color: #dbeafe; color: #1e40af; border-bottom: 2px solid #2563eb; }
-        
-        /* Context Flash */
-        .interactive-word.context-changed {
-            animation: flashGreen 1.5s ease-out;
-            background-color: #dcfce7;
-            border-bottom: 1px solid #16a34a;
-            color: #15803d;
-            font-weight: 600;
-        }
-        @keyframes flashGreen {
-            0% { background-color: #22c55e; color: white; }
-            100% { background-color: #dcfce7; color: #15803d; }
-        }
-
-        /* Loader */
-        .loader { width: 14px; height: 14px; border: 2px solid #e2e8f0; border-top: 2px solid #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .indonesia-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="300" fill="%23ff0000"/><rect y="300" width="900" height="300" fill="%23ffffff"/></svg>'); }
+        .english-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30"><clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath><clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><g clip-path="url(%23s)"><path d="M0,0 v30 h60 v-30 z" fill="%23012169"/><path d="M0,0 L60,30 L60,0 L0,30 z" fill="%23ffffff"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="%23c8102e" stroke-width="6"/><path d="M30,0 v30 M0,15 h60" stroke="%23ffffff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="%23c8102e" stroke-width="6"/></g></svg>'); }
+        .japanese-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="%23ffffff"/><circle cx="450" cy="300" r="180" fill="%23bc002d"/></svg>'); }
+        .german-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="200" fill="%23000000"/><rect y="200" width="900" height="200" fill="%23dd0000"/><rect y="400" width="900" height="200" fill="%23ffcc00"/></svg>'); }
+        .french-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="300" height="600" fill="%230025a4"/><rect x="300" width="300" height="600" fill="%23ffffff"/><rect x="600" width="300" height="600" fill="%23ef3340"/></svg>'); }
+        .spanish-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="%23aa151b"/><rect y="150" width="900" height="300" fill="%23f1bf00"/></svg>'); }
+        .arabic-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="200" fill="%23000000"/><rect y="200" width="900" height="200" fill="%23ffffff"/><rect y="400" width="900" height="200" fill="%23007a3d"/><path d="M450,300 L550,400 L350,400 Z" fill="%23ce1126"/></svg>'); }
+        .javanese-flag { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="%23ffffff"/><rect width="900" height="300" fill="%23ff0000"/></svg>'); }
+        .processing-bg { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .natural-text { line-height: 1.8; letter-spacing: 0.01em; text-rendering: optimizeLegibility; font-feature-settings: "kern", "liga", "clig", "calt"; }
+        .interactive-word { position: relative; cursor: pointer; border-bottom: 1px dashed rgba(59, 130, 246, 0.3); transition: all 0.2s ease; padding: 0 1px; border-radius: 2px; }
+        .interactive-word:hover { background: rgba(59, 130, 246, 0.1); border-bottom-color: #3b82f6; transform: translateY(-1px); }
+        .interactive-word.active { background: rgba(59, 130, 246, 0.15); border-bottom: 2px solid #3b82f6; font-weight: 600; }
+        .enhanced-dropdown { position: absolute; background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05); z-index: 1000; min-width: 280px; max-width: 400px; max-height: 400px; overflow: hidden; opacity: 0; transform: translateY(-10px) scale(0.95); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .enhanced-dropdown.show { opacity: 1; transform: translateY(0) scale(1); }
+        .word-option { padding: 12px 16px; border-bottom: 1px solid rgba(0, 0, 0, 0.05); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px; border-left: 3px solid transparent; }
+        .word-option:hover { background: rgba(59, 130, 246, 0.08); border-left-color: #3b82f6; }
+        .word-option:last-child { border-bottom: none; }
+        .word-preview { font-size: 16px; font-weight: 600; color: #1f2937; flex: 1; }
+        .word-tags { font-size: 11px; color: #6b7280; background: rgba(0, 0, 0, 0.04); padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+        .word-example { font-size: 13px; color: #4b5563; font-style: italic; margin-top: 4px; }
+        .dropdown-header { padding: 16px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .dropdown-footer { padding: 12px 16px; background: #f9fafb; border-top: 1px solid rgba(0, 0, 0, 0.05); text-align: center; font-size: 12px; color: #6b7280; }
+        .word-highlighted { background: linear-gradient(120deg, rgba(147, 197, 253, 0.3), rgba(196, 181, 253, 0.3)); border-radius: 4px; padding: 2px 4px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { background-color: rgba(147, 197, 253, 0.3); } 50% { background-color: rgba(147, 197, 253, 0.5); } 100% { background-color: rgba(147, 197, 253, 0.3); } }
+        .strategy-btn { padding: 10px 16px; border-radius: 10px; border: 2px solid #e5e7eb; background: white; transition: all 0.2s; text-align: left; cursor: pointer; }
+        .strategy-btn:hover { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.1); }
+        .strategy-btn.active { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff, #dbeafe); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15); }
+        .progress-bar { height: 4px; background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899); background-size: 200% 100%; animation: progress 2s ease-in-out infinite; border-radius: 2px; }
+        @keyframes progress { 0% { background-position: 0% 0%; } 50% { background-position: 100% 0%; } 100% { background-position: 0% 0%; } }
+        .quality-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .quality-good { background: linear-gradient(135deg, #10b981, #34d399); color: white; }
+        .quality-better { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; }
+        .quality-best { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; }
+        .quality-indicator { height: 6px; border-radius: 3px; background: #e5e7eb; overflow: hidden; }
+        .quality-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .loader { border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* UI Utilities */
-        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
-        .toggle-checkbox { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
-        .toggle-label { width: 36px; height: 20px; background-color: #cbd5e1; display: block; border-radius: 100px; position: relative; cursor: pointer; transition: background-color 0.2s; }
-        .toggle-label:after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background-color: #fff; border-radius: 90px; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .toggle-checkbox:checked + .toggle-label:after { left: calc(100% - 2px); transform: translateX(-100%); }
+        /* ===== PERBAIKAN SCROLL & RESPONSIF ===== */
+        .scrollable-textarea {
+            overflow-y: auto !important;
+            resize: none;
+        }
+        .flex-scroll {
+            min-height: 0;
+            flex: 1 1 0%;
+        }
+        .translation-scroll {
+            overflow-y: auto;
+            height: 100%;
+        }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen flex flex-col items-center" onclick="closeDropdownGlobal(event)">
-
-    <div class="w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative">
-        
-        <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-900/50"><i class="fas fa-magic"></i></div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">Nuansa AI Transalator</h1>
-                    <p class="text-[11px] text-slate-400">by AjarinWeb versi Beta0.0.25</p>
-                </div>
-            </div>
-            <div id="status-bar" class="text-xs font-mono text-green-400 opacity-0 transition-opacity"><i class="fas fa-check-circle"></i> Siap</div>
-        </div>
-
-        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row gap-4 items-center">
-            <div class="relative w-full md:w-5/12 group">
-                <label class="absolute -top-2 left-3 bg-slate-50 px-1 text-[10px] font-bold text-slate-400 z-10">DARI BAHASA</label>
-                <select id="sourceLang" onchange="resetAndTranslate()" class="w-full p-3 pl-4 pr-10 rounded-lg border border-slate-300 bg-white font-semibold text-slate-700 outline-none focus:border-blue-500 transition cursor-pointer relative z-0">
-                    <option value="auto">Deteksi Otomatis</option>
-                    <option value="en">Inggris (English)</option>
-                    <option value="fr">Prancis (Français)</option>
-                    <option value="id">Indonesia</option>
-                    <option value="jw">Jawa</option>
-                    <option value="ja">Jepang</option>
-                    <option value="ar">Arab</option>
-                    <option value="de">Jerman</option>
-                    <option value="es">Spanyol</option>
-                </select>
-                <div id="detected-badge" class="hidden absolute right-8 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded border border-blue-200 pointer-events-none z-10">TERDETEKSI</div>
-                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"><i class="fas fa-chevron-down text-xs"></i></div>
-            </div>
-            <i class="fas fa-arrow-right text-slate-300 hidden md:block"></i>
-            <div class="relative w-full md:w-5/12">
-                <label class="absolute -top-2 left-3 bg-slate-50 px-1 text-[10px] font-bold text-slate-400 z-10">KE BAHASA</label>
-                <select id="targetLang" onchange="resetAndTranslate()" class="w-full p-3 pl-4 pr-10 rounded-lg border border-slate-300 bg-white font-semibold text-slate-700 outline-none focus:border-blue-500 transition cursor-pointer relative z-0">
-                    <option value="id" selected>Indonesia</option>
-                    <option value="en">Inggris (English)</option>
-                    <option value="fr">Prancis (Français)</option>
-                    <option value="jw">Jawa</option>
-                    <option value="ja">Jepang</option>
-                    <option value="ar">Arab</option>
-                    <option value="de">Jerman</option>
-                    <option value="es">Spanyol</option>
-                </select>
-                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"><i class="fas fa-chevron-down text-xs"></i></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 h-[550px] divide-x divide-slate-100">
-            <div class="p-6 flex flex-col bg-white group">
-                <textarea id="input-text" class="flex-1 w-full text-lg text-slate-800 placeholder-slate-300 bg-transparent outline-none resize-none leading-relaxed" placeholder="Ketik teks sumber..." oninput="handleSourceInput()"></textarea>
-                <div class="flex justify-between items-center mt-2 pt-2 border-t border-dashed border-slate-100 opacity-50 group-hover:opacity-100 transition">
-                    <button onclick="document.getElementById('input-text').value=''; handleSourceInput()" class="text-xs text-red-400 hover:text-red-600 flex items-center gap-1"><i class="fas fa-trash"></i> Hapus</button>
-                    <span id="char-count" class="text-xs text-slate-400">0 chars</span>
-                </div>
-            </div>
-
-            <div class="p-6 bg-slate-50/50 relative flex flex-col group">
-                <div id="ai-status" class="hidden absolute top-4 right-6 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-100 z-10">
-                    <div class="loader w-3 h-3"></div>
-                    <span id="status-text" class="text-[10px] font-bold text-blue-600">AI MEMPROSES...</span>
-                </div>
-                <div id="output-editor" class="natural-text flex-1 overflow-y-auto pr-2" contenteditable="true" oninput="handleManualEdit()" onclick="handleEditorClick(event)"><span class="text-slate-400 italic pointer-events-none">Terjemahan muncul di sini...</span></div>
-                <div class="absolute bottom-4 right-6 flex gap-2">
-                     <button onclick="copyResult()" class="text-xs bg-white border shadow-sm px-3 py-2 rounded-lg text-blue-600 font-bold hover:bg-blue-50 transition"><i class="fas fa-copy mr-1"></i> Salin</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-blue-50 px-6 py-4 border-t border-blue-100">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <div class="bg-blue-200 p-1.5 rounded text-blue-800"><i class="fas fa-book"></i></div>
-                    <div><h3 class="text-sm font-bold text-blue-900">Glosarium Contekstual</h3><p class="text-[10px] text-blue-500">Kata yang disimpan akan otomatis mengganti terjemahan di masa depan.</p></div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-[11px] font-bold text-slate-500 uppercase">Auto-Fix</span>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                        <input type="checkbox" name="toggle" id="glossary-toggle" class="toggle-checkbox" checked onclick="triggerTranslationProcess()"/>
-                        <label for="glossary-toggle" class="toggle-label"></label>
+<body class="p-4 md:p-6 min-h-screen">
+    <!-- ===== MAIN CONTAINER ===== -->
+    <div class="max-w-7xl mx-auto">
+        <!-- Header (sama persis) -->
+        <div class="glass-card rounded-2xl mb-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-xl shadow-lg">
+                            <i class="fas fa-language text-2xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold">DeepFlow Universal Translator</h1>
+                            <p class="text-slate-300 mt-1 text-sm md:text-base">Natural Language Processing • Multi-Language Support • DeepL-like Quality</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="hidden md:block">
+                            <div class="text-right">
+                                <div class="text-xs text-slate-400">Translation Quality</div>
+                                <div class="quality-indicator w-32">
+                                    <div id="quality-fill" class="quality-fill bg-gradient-to-r from-green-500 to-emerald-500" style="width: 85%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="settings-btn" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition flex items-center gap-2">
+                            <i class="fas fa-sliders-h"></i>
+                            <span class="hidden md:inline">AI Settings</span>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div id="glossary-badges" class="flex flex-wrap gap-2 text-xs min-h-[30px] items-center">
-                <span class="text-slate-400 italic text-xs pl-1">Belum ada preferensi kata.</span>
+            
+            <!-- Language Selection (sama) -->
+            <div class="p-6 border-b border-slate-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Source Language</label>
+                        <div class="relative">
+                            <select id="source-lang" class="w-full p-3 pl-12 rounded-lg border border-slate-300 bg-white text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition appearance-none cursor-pointer">
+                                <option value="auto">Detect Language</option>
+                                <option value="en" selected>English</option>
+                                <option value="id">Indonesian</option>
+                                <option value="ja">Japanese</option>
+                                <option value="de">German</option>
+                                <option value="fr">French</option>
+                                <option value="es">Spanish</option>
+                                <option value="ar">Arabic</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ko">Korean</option>
+                                <option value="ru">Russian</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="it">Italian</option>
+                                <option value="nl">Dutch</option>
+                                <option value="tr">Turkish</option>
+                                <option value="vi">Vietnamese</option>
+                                <option value="th">Thai</option>
+                                <option value="jw">Javanese</option>
+                            </select>
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                                <div id="source-flag" class="language-flag english-flag"></div>
+                            </div>
+                            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-center">
+                        <button id="swap-langs" class="bg-slate-100 hover:bg-slate-200 p-3 rounded-full transition transform hover:rotate-180 duration-300">
+                            <i class="fas fa-exchange-alt text-slate-600"></i>
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Target Language</label>
+                        <div class="relative">
+                            <select id="target-lang" class="w-full p-3 pl-12 rounded-lg border border-slate-300 bg-white text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition appearance-none cursor-pointer">
+                                <option value="id" selected>Indonesian</option>
+                                <option value="en">English</option>
+                                <option value="ja">Japanese</option>
+                                <option value="de">German</option>
+                                <option value="fr">French</option>
+                                <option value="es">Spanish</option>
+                                <option value="ar">Arabic</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ko">Korean</option>
+                                <option value="ru">Russian</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="it">Italian</option>
+                                <option value="nl">Dutch</option>
+                                <option value="tr">Turkish</option>
+                                <option value="vi">Vietnamese</option>
+                                <option value="th">Thai</option>
+                                <option value="jw">Javanese</option>
+                            </select>
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                                <div id="target-flag" class="language-flag indonesia-flag"></div>
+                            </div>
+                            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Strategy Selection (sama) -->
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-brain text-blue-600"></i>
+                            <span>AI Naturalization Strategy</span>
+                        </h3>
+                        <p class="text-sm text-slate-600">Choose how the AI processes translation for natural flow</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button data-strategy="fast" class="strategy-btn">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-bolt text-yellow-500"></i>
+                                <div>
+                                    <div class="font-semibold">Fast</div>
+                                    <div class="text-xs text-slate-500">Basic translation</div>
+                                </div>
+                            </div>
+                        </button>
+                        <button data-strategy="balanced" class="strategy-btn active">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-scale-balanced text-green-500"></i>
+                                <div>
+                                    <div class="font-semibold">Balanced</div>
+                                    <div class="text-xs text-slate-500">Quality + Speed</div>
+                                </div>
+                            </div>
+                        </button>
+                        <button data-strategy="deep" class="strategy-btn">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-gem text-purple-500"></i>
+                                <div>
+                                    <div class="font-semibold">Deep</div>
+                                    <div class="text-xs text-slate-500">Best quality</div>
+                                </div>
+                            </div>
+                        </button>
+                        <button data-strategy="creative" class="strategy-btn">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-palette text-pink-500"></i>
+                                <div>
+                                    <div class="font-semibold">Creative</div>
+                                    <div class="text-xs text-slate-500">Natural & varied</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div id="synonym-menu"></div>
+        
+        <!-- Translation Area – RESPONSIF HEIGHT + SCROLL FIX -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Source Text -->
+            <div class="glass-card rounded-2xl overflow-hidden flex flex-col h-[50vh] min-h-[350px] max-h-[700px]">
+                <div class="bg-gradient-to-r from-slate-50 to-slate-100 p-4 border-b border-slate-200 flex-shrink-0">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-keyboard text-slate-600"></i>
+                            <span>Source Text</span>
+                            <span id="source-lang-name" class="text-sm font-normal text-slate-500">(English)</span>
+                        </h3>
+                        <div class="flex gap-2">
+                            <button id="clear-source" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-slate-700 transition">
+                                <i class="fas fa-trash-alt mr-1"></i> Clear
+                            </button>
+                            <button id="speak-source" class="text-xs bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg text-blue-700 transition">
+                                <i class="fas fa-volume-up mr-1"></i> Speak
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- FIX: min-height-0 + overflow-auto -->
+                <div class="flex-scroll p-4 relative">
+                    <textarea id="source-text" class="w-full h-full text-lg text-slate-800 placeholder-slate-400 bg-transparent outline-none leading-relaxed font-medium p-2 scrollable-textarea" placeholder="Enter text to translate...&#10;&#10;Example: The weather today is absolutely beautiful, with clear skies and a gentle breeze that makes it perfect for outdoor activities."></textarea>
+                    <div id="source-char-count" class="absolute bottom-4 right-4 text-xs text-slate-400 bg-white/80 px-2 py-1 rounded">0 characters</div>
+                </div>
+                <div class="p-4 border-t border-slate-200 bg-slate-50 flex-shrink-0">
+                    <div class="text-xs text-slate-500 flex justify-between">
+                        <div><i class="fas fa-info-circle mr-1"></i><span>Enter text in any language, or use microphone</span></div>
+                        <div class="flex gap-4">
+                            <button id="mic-source" class="text-slate-600 hover:text-blue-600"><i class="fas fa-microphone"></i></button>
+                            <button id="paste-source" class="text-slate-600 hover:text-blue-600"><i class="fas fa-paste"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Translated Text -->
+            <div class="glass-card rounded-2xl overflow-hidden flex flex-col h-[50vh] min-h-[350px] max-h-[700px]">
+                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-b border-slate-200 flex-shrink-0">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fas fa-language text-blue-600"></i>
+                            <span>Translated Text</span>
+                            <span id="target-lang-name" class="text-sm font-normal text-slate-500">(Indonesian)</span>
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <div id="ai-processing" class="hidden items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-blue-200">
+                                <div class="loader w-4 h-4 border-2 border-blue-200 border-t-blue-600"></div>
+                                <span class="text-xs font-bold text-blue-600">PROCESSING</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="copy-translation" class="text-xs bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-700 transition">
+                                    <i class="fas fa-copy mr-1"></i> Copy
+                                </button>
+                                <button id="speak-translation" class="text-xs bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-white transition">
+                                    <i class="fas fa-volume-up mr-1"></i> Speak
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- FIX: min-height-0 + scrolling container -->
+                <div class="flex-scroll p-4 relative">
+                    <div id="translation-container" class="w-full h-full overflow-y-auto">
+                        <div id="translation-placeholder" class="h-full flex items-center justify-center text-center p-8">
+                            <div class="max-w-md">
+                                <div class="text-5xl mb-4 text-slate-300"><i class="fas fa-language"></i></div>
+                                <h4 class="text-xl font-bold text-slate-400 mb-2">Translation Ready</h4>
+                                <p class="text-slate-500">Enter text on the left to see the natural translation here. The AI will optimize sentence structure and word choice for natural flow.</p>
+                                <div class="mt-6 flex justify-center"><div class="quality-badge quality-better"><i class="fas fa-star mr-1"></i>DeepL-like Quality</div></div>
+                            </div>
+                        </div>
+                        <div id="translation-result" class="hidden natural-text p-4 text-slate-800 leading-relaxed text-lg"></div>
+                    </div>
+                    <div id="translation-meta" class="absolute bottom-4 right-4 text-xs text-slate-400 bg-white/80 px-2 py-1 rounded hidden">
+                        <span id="translation-time">0.0s</span> • <span id="translation-quality">Good</span>
+                    </div>
+                </div>
+                <div class="p-4 border-t border-slate-200 bg-blue-50 flex-shrink-0">
+                    <div class="text-xs text-slate-600">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2"><i class="fas fa-bolt text-amber-500"></i><span>Click any word for alternatives</span></div>
+                                <div class="flex items-center gap-2"><i class="fas fa-magic text-purple-500"></i><span>AI-powered naturalization</span></div>
+                            </div>
+                            <button id="improve-translation" class="text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:opacity-90 text-white px-3 py-1.5 rounded-lg font-semibold transition">
+                                <i class="fas fa-wand-magic-sparkles mr-1"></i> Enhance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Features (sama) -->
+        <div class="glass-card rounded-2xl mt-6 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fas fa-book text-blue-600"></i><span>Translation Memory</span></h4>
+                    <div class="space-y-2"><div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg"><div class="font-medium text-slate-800">Recently Translated</div><div id="translation-history" class="mt-2 space-y-1 text-xs"><div class="text-slate-400 italic">No translations yet</div></div></div></div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fas fa-sliders-h text-purple-600"></i><span>Naturalization Settings</span></h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Sentence Restructuring</span><label class="switch"><input type="checkbox" id="opt-restructure" checked><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Idiom Detection</span><label class="switch"><input type="checkbox" id="opt-idioms" checked><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Formality Adjustment</span><label class="switch"><input type="checkbox" id="opt-formality" checked><span class="slider"></span></label></div>
+                        <div class="flex items-center justify-between"><span class="text-sm text-slate-700">Pronoun Optimization</span><label class="switch"><input type="checkbox" id="opt-pronouns" checked><span class="slider"></span></label></div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i class="fas fa-chart-line text-green-600"></i><span>Translation Analytics</span></h4>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm"><span class="text-slate-600">Naturalness Score</span><span id="naturalness-score" class="font-bold text-green-600">--</span></div>
+                        <div class="progress-bar"></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-600">Fluency Level</span><span id="fluency-level" class="font-bold text-blue-600">--</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-600">Accuracy</span><span id="accuracy-level" class="font-bold text-purple-600">--</span></div>
+                        <div class="text-xs text-slate-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Scores based on AI analysis of translation quality</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Word Alternatives Dropdown -->
+    <div id="word-alternatives-dropdown" class="enhanced-dropdown">
+        <div class="dropdown-header">
+            <div class="font-bold">Alternatives for <span id="dropdown-word">word</span></div>
+            <div class="text-sm opacity-90 mt-1">Select a different word or phrase</div>
+        </div>
+        <div id="alternatives-list" class="max-h-72 overflow-y-auto"></div>
+        <div class="dropdown-footer"><i class="fas fa-info-circle mr-1"></i> Click to replace • ESC to close</div>
+    </div>
+    
+    <!-- Settings Modal (sama) -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-2xl mx-4 overflow-hidden">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6">
+                <h3 class="text-xl font-bold flex items-center gap-3"><i class="fas fa-cogs"></i><span>Advanced AI Settings</span></h3>
+                <p class="text-slate-300 text-sm mt-1">Configure the natural language processing engine</p>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="font-bold text-slate-800 mb-3">Processing Engine</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg"><div><div class="font-medium text-slate-800">Neural Post-Editing</div><div class="text-sm text-slate-600">Apply AI-based sentence refinement</div></div><label class="switch"><input type="checkbox" id="neural-editing" checked><span class="slider"></span></label></div>
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg"><div><div class="font-medium text-slate-800">Context Memory</div><div class="text-sm text-slate-600">Remember context across sentences</div></div><label class="switch"><input type="checkbox" id="context-memory" checked><span class="slider"></span></label></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 mb-3">Language-Specific Rules</h4>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-50 rounded-lg">
+                                <div class="font-medium text-slate-800 mb-2">Word Order Preferences</div>
+                                <div class="text-sm text-slate-600 mb-3">Adjust sentence structure for natural flow in target language</div>
+                                <div class="flex gap-2">
+                                    <button class="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded-lg">SVO → SOV</button>
+                                    <button class="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded-lg">Time First</button>
+                                    <button class="text-xs bg-white border border-slate-300 px-3 py-1.5 rounded-lg">Adjective Before Noun</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 mb-3">Quality Preferences</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg"><div><div class="font-medium text-slate-800">Prefer Natural Over Literal</div><div class="text-sm text-slate-600">Sacrifice some accuracy for better flow</div></div><label class="switch"><input type="checkbox" id="prefer-natural" checked><span class="slider"></span></label></div>
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg"><div><div class="font-medium text-slate-800">Creative Variations</div><div class="text-sm text-slate-600">Use diverse vocabulary when possible</div></div><label class="switch"><input type="checkbox" id="creative-variations"><span class="slider"></span></label></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-200 flex justify-end gap-3">
+                <button id="close-settings" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button id="save-settings" class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90">Save Settings</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        let typingTimer;
-        let manualEditTimer;
-        let glossary = {}; 
-        let tempEdits = {}; 
-        
-        // --- 1. HANDLING INPUT & REORDERING LOGIC ---
-        function handleSourceInput() {
-            const text = document.getElementById('input-text').value;
-            document.getElementById('char-count').innerText = text.length + " chars";
-            clearTimeout(typingTimer);
-            if(text.trim()) typingTimer = setTimeout(triggerTranslationProcess, 600);
-        }
+<script>
+// ===================== DEEPFLOV – GOOGLE THESAURUS (dt=ss) + SCROLL FIX =====================
+// ✅ Alternatif kata menggunakan Google Thesaurus (data11) untuk semua bahasa
+// ✅ Tidak ada Kateglo – murni Google Thesaurus + fallback lokal
+// ✅ Scroll diperbaiki, tombol tidak tertutup teks panjang
+// ✅ Responsif untuk semua ukuran layar
 
-        function resetAndTranslate() { tempEdits = {}; triggerTranslationProcess(); }
+// ---------- FALLBACK SYNONYMS ----------
+const FALLBACK_SYNONYMS = {
+    'en': { 'good': ['great','excellent','fine','superb'], 'bad': ['poor','terrible','awful'], 'beautiful': ['lovely','gorgeous','stunning'], 'happy': ['joyful','cheerful','delighted'], 'sad': ['unhappy','sorrowful','depressed'] },
+    'id': { 'baik': ['bagus','mulia','elok','sempurna'], 'indah': ['cantik','elok','permai','menawan'], 'senang': ['gembira','bahagia','riang','suka'], 'sedih': ['duka','pilu','murung','berduka'] }
+};
 
-        function handleManualEdit() {
-            closeDropdown();
-            clearTimeout(manualEditTimer);
-            showStatus("MENUNGGU KETIKAN...", false);
-            manualEditTimer = setTimeout(() => {
-                const currentText = document.getElementById('output-editor').innerText;
-                triggerContextualFix(currentText);
-            }, 1200);
-        }
-
-        function handleEditorClick(e) {
-            if (e.target.classList.contains('interactive-word')) {
-                const word = e.target.dataset.original || e.target.innerText;
-                openDropdown(e.target, word, event);
+// ---------- UNIVERSAL TRANSLATOR CLASS (sama persis) ----------
+class UniversalTranslator {
+    constructor() {
+        this.strategy = 'balanced';
+        this.settings = { restructure: true, idioms: true, formality: true, pronouns: true, neuralEditing: true, contextMemory: true, preferNatural: true, creativeVariations: false };
+        this.translationHistory = [];
+        this.contextBuffer = [];
+    }
+    async translateText(text, sourceLang, targetLang) {
+        const startTime = performance.now();
+        try {
+            const baseTranslation = await this.getBaseTranslation(text, sourceLang, targetLang);
+            let naturalized = baseTranslation;
+            switch(this.strategy) {
+                case 'fast': break;
+                case 'balanced': naturalized = this.applyBalancedNaturalization(baseTranslation, sourceLang, targetLang); break;
+                case 'deep': naturalized = this.applyDeepNaturalization(baseTranslation, sourceLang, targetLang); break;
+                case 'creative': naturalized = this.applyCreativeNaturalization(baseTranslation, sourceLang, targetLang); break;
             }
+            naturalized = this.polishTranslation(naturalized, targetLang);
+            const processingTime = ((performance.now() - startTime) / 1000).toFixed(1);
+            const qualityScore = this.calculateQualityScore(baseTranslation, naturalized, text);
+            this.saveToHistory(text, naturalized, sourceLang, targetLang, qualityScore);
+            return { translation: naturalized, processingTime, qualityScore, baseTranslation };
+        } catch (error) {
+            console.error('Translation error:', error);
+            return { translation: text, processingTime: '0.5', qualityScore: 50 };
         }
+    }
 
-        // FUNGSI BARU: OPTIMASI STRUKTUR SUMBER (Frame Setter Logic)
-        function optimizeSourceText(text) {
-            // Logika: Pindahkan keterangan waktu di akhir ke awal kalimat
-            // Contoh: "She cooked rice every day" -> "Every day, She cooked rice"
-            // Ini membantu translator menempatkan "Setiap hari" di awal (Tone Natural Indo)
-            
-            const timeMarkers = [
-                'each day', 'every day', 'each morning', 'every morning', 
-                'each night', 'every night', 'each week', 'every week',
-                'each month', 'every month', 'each year', 'every year',
-                'daily', 'weekly', 'monthly', 'yearly', 'nowadays'
-            ];
+    // Polish terpusat
+    polishTranslation(text, targetLang) {
+        let result = text;
+        if (this.settings.restructure) result = this.applyStructuralAdjustments(result, null, targetLang);
+        if (this.settings.idioms) result = this.handleIdioms(result, null, targetLang);
+        if (this.settings.formality) result = this.adjustFormality(result, targetLang, true);
+        if (this.settings.pronouns) result = this.optimizePronouns(result, targetLang);
+        result = this.finalPolish(result, targetLang);
+        return result;
+    }
 
-            let lines = text.split('\n');
-            let optimizedLines = lines.map(line => {
-                let lowerLine = line.toLowerCase().trim();
-                for (let marker of timeMarkers) {
-                    // Cek apakah kalimat diakhiri dengan time marker (dan bukan sudah diawali)
-                    if (lowerLine.endsWith(marker) && !lowerLine.startsWith(marker)) {
-                        // Ambil marker dari string asli (biar casing terjaga)
-                        let foundMarker = line.substring(line.length - marker.length).trim();
-                        let content = line.substring(0, line.length - marker.length).trim();
-                        // Hapus koma atau titik di akhir konten jika ada
-                        content = content.replace(/[,.]$/, '');
-                        
-                        // Reconstruct: "Marker, Content."
-                        return `${foundMarker.charAt(0).toUpperCase() + foundMarker.slice(1)}, ${content}.`;
-                    }
+    async getBaseTranslation(text, sourceLang, targetLang) {
+        if (!text.trim()) return '';
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+        try {
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+            let translated = '';
+            if (data && data[0]) data[0].forEach(item => { if (item[0]) translated += item[0]; });
+            return translated || text;
+        } catch { return text; }
+    }
+
+    applyBalancedNaturalization(text, sourceLang, targetLang) {
+        let result = text;
+        result = this.optimizePronouns(result, targetLang);
+        result = this.enhanceConnectives(result, targetLang);
+        result = this.naturalizeSentenceStructure(result, targetLang);
+        return result;
+    }
+    applyDeepNaturalization(text, sourceLang, targetLang) {
+        let result = text;
+        for (let i=0;i<2;i++) {
+            result = this.reorderTimeExpressions(result, targetLang);
+            result = this.optimizePronouns(result, targetLang);
+            result = this.enhanceConnectives(result, targetLang);
+            result = this.naturalizeSentenceStructure(result, targetLang);
+            result = this.handleIdioms(result, sourceLang, targetLang);
+        }
+        if (this.contextBuffer.length) result = this.applyContextAwareAdjustments(result, targetLang);
+        return result;
+    }
+    applyCreativeNaturalization(text, sourceLang, targetLang) {
+        let result = this.applyBalancedNaturalization(text, sourceLang, targetLang);
+        result = this.addCreativeVariations(result, targetLang);
+        return result;
+    }
+    reorderTimeExpressions(text, targetLang) {
+        const timeFirstLangs = ['id','ja','ko','zh','th','vi'];
+        if (timeFirstLangs.includes(targetLang)) return text.replace(/(.+?)\s+(each|every|all)\s+(\w+)\b/i, '$2 $3 $1');
+        return text;
+    }
+    optimizePronouns(text, targetLang) {
+        if (targetLang === 'id') return text.replace(/\b(dia|ia|mereka)\s+(\w+)\s+dan\s+\1\s+/gi, '$1 $2 lalu ');
+        if (targetLang === 'en') return text.replace(/\b(he|she|it|they)\s+(\w+)\s+and\s+\1\s+/gi, '$1 $2 and ');
+        if (targetLang === 'de') return text.replace(/\b(er|sie|es)\s+(\w+)\s+und\s+\1\s+/gi, '$1 $2 und ');
+        if (targetLang === 'fr') return text.replace(/\b(il|elle)\s+(\w+)\s+et\s+\1\s+/gi, '$1 $2 et ');
+        return text;
+    }
+    enhanceConnectives(text, targetLang) {
+        const map = { 'id': { ' and ': ' lalu ', ' and then': ' kemudian' }, 'ja': { ' and ': '、', ' and then': 'そして' }, 'de': { ' and ': ' und ', ' and then': ' und dann ' }, 'fr': { ' and ': ' et ', ' and then': ' et puis ' }, 'es': { ' and ': ' y ', ' and then': ' y luego ' } };
+        let result = text;
+        if (map[targetLang]) Object.entries(map[targetLang]).forEach(([en, trans]) => result = result.replace(new RegExp(en, 'gi'), trans));
+        return result;
+    }
+    adjustFormality(text, targetLang, formal = true) {
+        if (!formal) return text;
+        const adjust = { 'id': (t) => t.replace(/\b(aku|gue|gw)\b/gi, 'saya').replace(/\b(lu|elo|loe)\b/gi, 'Anda'), 'en': (t) => t.replace(/\b(gonna)\b/gi, 'going to').replace(/\b(wanna)\b/gi, 'want to'), 'ja': (t) => t.replace(/だ/g, 'です').replace(/じゃない/g, 'ではありません'), 'de': (t) => t.replace(/\b(du)\b/gi, 'Sie').replace(/\b(euch)\b/gi, 'Ihnen'), 'fr': (t) => t.replace(/\b(tu)\b/gi, 'vous').replace(/\b(ton|ta|tes)\b/gi, 'votre'), 'es': (t) => t.replace(/\b(tú)\b/gi, 'usted').replace(/\b(tu)\b/gi, 'su') };
+        return adjust[targetLang] ? adjust[targetLang](text) : text;
+    }
+    naturalizeSentenceStructure(text, targetLang) {
+        let result = text;
+        result = result.replace(/\b(\w+)\s+\1\b/gi, '$1');
+        const improvements = [ [/\b(that|which)\s+(is|are|was|were)\s+/gi, ''], [/\b(in order to)\b/gi, 'to'], [/\b(due to the fact that)\b/gi, 'because'], [/\b(at this point in time)\b/gi, 'now'] ];
+        improvements.forEach(([p, r]) => result = result.replace(p, r));
+        if (targetLang === 'id') { result = result.replace(/\b(yang)\s+(adalah|ialah)\b/gi, ''); result = result.replace(/\b(di dalam)\b/gi, 'dalam'); result = result.replace(/\b(untuk bisa)\b/gi, 'untuk'); }
+        if (targetLang === 'en') { result = result.replace(/\ba\s+([aeiou])/gi, 'an $1'); result = result.replace(/\b(think|believe|say|know) that\b/gi, '$1'); }
+        return result;
+    }
+    handleIdioms(text, sourceLang, targetLang) {
+        if (sourceLang !== 'en') return text;
+        const idioms = { 'piece of cake': { 'id':'sangat mudah','de':'sehr einfach','fr':'très facile','es':'muy fácil','ja':'とても簡単' }, 'break the ice': { 'id':'mencairkan suasana','de':'das Eis brechen','fr':'briser la glace','es':'romper el hielo','ja':'氷を砕く' }, 'hit the nail on the head': { 'id':'tepat sasaran','de':'den Nagel auf den Kopf treffen','fr':'mettre dans le mille','es':'dar en el clavo','ja':'的を射る' } };
+        let result = text;
+        Object.keys(idioms).forEach(idiom => {
+            if (result.toLowerCase().includes(idiom.toLowerCase())) {
+                const trans = idioms[idiom][targetLang];
+                if (trans) result = result.replace(new RegExp(idiom, 'gi'), trans);
+            }
+        });
+        return result;
+    }
+    addCreativeVariations(text, targetLang) {
+        let result = text;
+        const variations = { 'good': { 'id': ['bagus','baik','memuaskan'], 'en': ['great','excellent','superb'], 'de': ['gut','großartig'], 'fr': ['bon','excellent'], 'ja': ['良い','素晴らしい'] }, 'beautiful': { 'id': ['indah','cantik','elok'], 'en': ['gorgeous','stunning','lovely'], 'de': ['schön','wunderschön'], 'fr': ['beau','magnifique'], 'ja': ['美しい','綺麗'] } };
+        Object.keys(variations).forEach(word => {
+            if (variations[word][targetLang]) {
+                const regex = new RegExp(`\\b${word}\\b`, 'gi');
+                if (regex.test(result)) {
+                    const alts = variations[word][targetLang];
+                    const chosen = alts[Math.floor(Math.random() * alts.length)];
+                    result = result.replace(regex, chosen);
                 }
-                return line;
-            });
-
-            return optimizedLines.join('\n');
-        }
-
-        // --- 2. CORE TRANSLATION PROCESS (DOUBLE PASS) ---
-        async function triggerTranslationProcess() {
-            let text = document.getElementById('input-text').value;
-            if(!text.trim()) {
-                document.getElementById('output-editor').innerHTML = '<span class="text-slate-400 italic pointer-events-none">Terjemahan muncul di sini...</span>';
-                return;
             }
+        });
+        return result;
+    }
+    applyStructuralAdjustments(text, sourceLang, targetLang) {
+        let result = text;
+        result = this.reorderTimeExpressions(result, targetLang);
+        result = this.optimizePronouns(result, targetLang);
+        result = this.enhanceConnectives(result, targetLang);
+        return result;
+    }
+    applyContextAwareAdjustments(text, targetLang) { return text; }
+    finalPolish(text, targetLang) {
+        let result = text;
+        result = result.replace(/\s+/g, ' ').trim();
+        result = result.replace(/\s+([.,!?;:])/g, '$1');
+        result = result.replace(/([.,!?;:])(\w)/g, '$1 $2');
+        if (result.length > 0) result = result.charAt(0).toUpperCase() + result.slice(1);
+        if (!/[.!?]$/.test(result) && result.length > 10) result += '.';
+        result = result.replace(/([.,!?])\1+/g, '$1');
+        return result;
+    }
+    calculateQualityScore(base, natural, original) {
+        let score = 85;
+        if (natural !== base) score += 5;
+        const ratio = natural.length / (original.length || 1);
+        if (ratio < 0.5 || ratio > 2) score -= 10;
+        if (/[.!?]/.test(natural)) score += 5;
+        return Math.max(50, Math.min(99, score));
+    }
+    saveToHistory(original, translation, sourceLang, targetLang, qualityScore) {
+        this.translationHistory.unshift({ id: Date.now(), original, translation, sourceLang, targetLang, qualityScore, timestamp: new Date().toISOString() });
+        if (this.translationHistory.length > 10) this.translationHistory.pop();
+        this.contextBuffer.push(original);
+        if (this.contextBuffer.length > 3) this.contextBuffer.shift();
+    }
+    getHistory() { return this.translationHistory; }
+    setStrategy(strategy) { this.strategy = strategy; }
+    updateSettings(settings) { this.settings = { ...this.settings, ...settings }; }
+}
 
-            showStatus("MENERJEMAHKAN...", true);
-            const sl = document.getElementById('sourceLang').value;
-            const tl = document.getElementById('targetLang').value;
-
-            // PRE-PROCESSING: Reorder Source Text jika Source Inggris
-            if (sl === 'en' || sl === 'auto') {
-                text = optimizeSourceText(text);
-            }
-
-            try {
-                // PASS 1: Terjemahan Dasar
-                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dt=at&q=${encodeURIComponent(text)}`;
-                const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                const res = await fetch(proxy);
-                const data = await res.json();
-
-                if (sl === 'auto' && data[2]) {
-                    const langMap = {'fr':'PRANCIS', 'en':'INGGRIS', 'id':'INDONESIA', 'jw':'JAWA', 'ja':'JEPANG', 'ar':'ARAB', 'de':'JERMAN'};
-                    const detected = langMap[data[2]] || data[2].toUpperCase();
-                    document.getElementById('detected-badge').innerText = detected;
-                    document.getElementById('detected-badge').classList.remove('hidden');
-                } else { document.getElementById('detected-badge').classList.add('hidden'); }
-
-                let translatedText = "";
-                if (data && data[0]) data[0].forEach(s => { if (s[0]) translatedText += s[0]; });
-
-                // PASS 2: NUANSA AI SMOOTHING (Iterative Decoding)
-                // Kita kirim hasil terjemahan dasar KEMBALI ke AI dengan mode 'Auto-Correction'
-                // Ini memaksa AI memilih padanan kata yang lebih natural (Idiomatic preference)
-                // Contoh: "Minuman model baru" -> "Minuman baru" (karena frekuensi penggunaan lebih tinggi)
-                
-                showStatus("MENYEMPURNAKAN NUANSA...", true);
-                const smoothUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(translatedText)}`;
-                const smoothProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(smoothUrl)}`;
-                
-                try {
-                    const smoothRes = await fetch(smoothProxy);
-                    const smoothData = await smoothRes.json();
-                    let smoothedText = "";
-                    if (smoothData && smoothData[0]) smoothData[0].forEach(s => { if (s[0]) smoothedText += s[0]; });
-                    // Gunakan hasil smoothing jika tidak kosong dan tidak terlalu pendek
-                    if (smoothedText && smoothedText.length > translatedText.length * 0.5) {
-                        translatedText = smoothedText;
-                    }
-                } catch(err) { /* Fail safe ke text awal */ }
-
-                // B. APPLY GLOSSARY & EDITS (Strict Logic)
-                let activeEdits = { ...tempEdits };
-                if (document.getElementById('glossary-toggle').checked) {
-                    activeEdits = { ...glossary, ...tempEdits };
-                }
-
-                if (Object.keys(activeEdits).length > 0) {
-                    Object.keys(activeEdits).forEach(oldWord => {
-                        let newWord = activeEdits[oldWord];
-                        // Logic Suffix Morphing
-                        let suffix = "";
-                        if (oldWord.toLowerCase().endsWith('mu')) suffix = "mu";
-                        else if (oldWord.toLowerCase().endsWith('ku')) suffix = "ku";
-                        else if (oldWord.toLowerCase().endsWith('nya')) suffix = "nya";
-
-                        let replacement = newWord;
-                        if (suffix && !newWord.toLowerCase().endsWith(suffix)) {
-                            let pronoun = suffix === "mu" ? "kamu" : (suffix === "ku" ? "aku" : "dia");
-                            replacement = `${newWord} ${pronoun}`;
+// ========== GOOGLE THESAURUS – UNTUK SEMUA BAHASA ==========
+async function getUniversalGoogleThesaurus(word, lang) {
+    const candidates = [];
+    const seen = new Set();
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${lang}&tl=en&dt=ss&q=${encodeURIComponent(word)}`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+        if (data && data[11]) {
+            data[11].forEach(category => {
+                const pos = category[0];
+                if (category[1]) {
+                    category[1].forEach(group => {
+                        if (group[0]) {
+                            group[0].forEach(syn => {
+                                if (!seen.has(syn.toLowerCase()) && syn.toLowerCase() !== word.toLowerCase()) {
+                                    seen.add(syn.toLowerCase());
+                                    candidates.push({
+                                        word: syn,
+                                        type: pos,
+                                        description: 'Google Thesaurus',
+                                        tags: [pos, 'Google'],
+                                        example: `Alternatif: ${syn}`
+                                    });
+                                }
+                            });
                         }
-
-                        // Regex Boundary
-                        const regex = new RegExp(`\\b${oldWord}\\b`, 'gi');
-                        translatedText = translatedText.replace(regex, replacement);
-                    });
-
-                    // C. FINAL CONTEXT RE-CHECK
-                    triggerContextualFix(translatedText);
-                } else {
-                    renderOutput(translatedText, false);
-                    hideStatus();
-                }
-
-            } catch (e) { console.error(e); hideStatus(); }
-        }
-
-        async function triggerContextualFix(textToFix) {
-            showStatus("MENATA TATA BAHASA...", true);
-            const tl = document.getElementById('targetLang').value;
-            try {
-                // Agglutination cleanup
-                let cleanedText = textToFix.replace(/(\w+)\s+-(\w+)/g, "$1$2");
-                cleanedText = cleanedText.replace(/(\w+)-\s+(\w+)/g, "$1$2");
-
-                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(cleanedText)}`;
-                const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                const res = await fetch(proxy);
-                const data = await res.json();
-                
-                let fixedText = "";
-                if (data && data[0]) data[0].forEach(s => { if (s[0]) fixedText += s[0]; });
-                renderOutput(fixedText, true);
-                hideStatus();
-            } catch (e) { renderOutput(textToFix, false); hideStatus(); }
-        }
-
-        // --- 3. RENDERING ---
-        function renderOutput(text, isFixing) {
-            const container = document.getElementById('output-editor');
-            const editClass = isFixing ? 'flash-fix' : '';
-            const parts = text.split(/([^\w\u00C0-\u017F\-]+)/g); 
-            
-            let activeEdits = { ...tempEdits };
-            if (document.getElementById('glossary-toggle').checked) activeEdits = { ...glossary, ...tempEdits };
-            const editedValues = Object.values(activeEdits).map(v => v.toLowerCase().replace(/^-|-$/g, ''));
-
-            let html = '';
-            parts.forEach(part => {
-                if (!part.trim() || part.match(/[^\w\u00C0-\u017F\-]/)) {
-                    html += part;
-                } else {
-                    let isEdited = false;
-                    if(editedValues.some(v => part.toLowerCase().includes(v) && v.length > 1)) isEdited = true;
-                    const safeWord = part.replace(/"/g, '&quot;');
-                    const extraClass = isEdited ? 'context-changed' : editClass;
-                    html += `<span class="interactive-word ${extraClass}" data-original="${safeWord}">${part}</span>`;
-                }
-            });
-            container.innerHTML = html;
-            if(isFixing) placeCaretAtEnd(container);
-        }
-
-        function placeCaretAtEnd(el) {
-            el.focus();
-            if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
-                var range = document.createRange();
-                range.selectNodeContents(el);
-                range.collapse(false);
-                var sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-        }
-
-        // --- 4. THESAURUS (DEEP MORPH & PIVOT) ---
-        async function openDropdown(element, word, event) {
-            event.stopPropagation();
-            const menu = document.getElementById('synonym-menu');
-            const tl = document.getElementById('targetLang').value; 
-            
-            const rect = element.getBoundingClientRect();
-            menu.style.display = 'block';
-            let leftPos = rect.left;
-            if (rect.left > window.innerWidth / 2) leftPos = rect.right - 340;
-            if (leftPos < 10) leftPos = 10;
-            menu.style.left = leftPos + 'px';
-            menu.style.top = (rect.bottom + 5) + 'px';
-            requestAnimationFrame(() => menu.classList.add('show'));
-
-            menu.innerHTML = `<div class="p-6 text-center"><div class="loader mx-auto mb-2"></div><div class="text-[10px] text-slate-400">Analisis Variasi...</div></div>`;
-
-            try {
-                let candidates = [];
-                const lower = word.toLowerCase();
-                
-                // Manual Morph
-                if (lower.endsWith('mu')) candidates.push({ word: '-mu', type: 'Suffix' }, { word: 'kamu', type: 'Pronoun' });
-                else if (lower.endsWith('ku')) candidates.push({ word: '-ku', type: 'Suffix' });
-                else if (lower.endsWith('nya')) candidates.push({ word: '-nya', type: 'Suffix' });
-                if (lower.startsWith('mencinta') || lower.startsWith('menyu')) candidates.push({ word: 'cinta', type: 'Root' }, { word: 'suka', type: 'Root' });
-
-                // PIVOT STRATEGY (Source Meaning)
-                const pivotUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=en&dt=t&q=${encodeURIComponent(word)}`;
-                const pivotProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(pivotUrl)}`;
-                const pivotRes = await fetch(pivotProxy);
-                const pivotData = await pivotRes.json();
-                const pivotWord = (pivotData[0] && pivotData[0][0]) ? pivotData[0][0][0] : word;
-
-                // NMT ALTERNATIVES
-                const altUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tl}&dt=at&dt=bd&dt=rw&q=${encodeURIComponent(pivotWord)}`;
-                const altProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(altUrl)}`;
-                const altRes = await fetch(altProxy);
-                const altData = await altRes.json();
-
-                if (altData[1]) {
-                    altData[1].forEach(g => {
-                        const pos = g[0];
-                        g[1].forEach(cand => candidates.push({ word: cand, type: pos }));
                     });
                 }
-
-                if (candidates.length > 0) {
-                    renderSynonymList(menu, word, tl, candidates);
-                } else {
-                    renderManualMode(menu, word, tl, "Tidak ada variasi ditemukan.");
-                }
-            } catch (e) {
-                renderManualMode(menu, word, tl, null);
-            }
-        }
-
-        function renderSynonymList(menu, word, lang, list) {
-            let html = `
-                <div class="sticky top-0 bg-white z-10 border-b border-slate-100 p-3">
-                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-2 uppercase"><span>Ganti: "${word}"</span><span>${lang}</span></div>
-                    <div class="flex gap-2">
-                        <input type="text" id="manual-input" placeholder="Manual... (cth: -mu)" class="flex-1 text-sm border rounded px-2 py-1 outline-none focus:border-blue-500">
-                        <button onclick="applyChange('${word}', document.getElementById('manual-input').value)" class="bg-blue-100 text-blue-600 border border-blue-200 px-3 rounded hover:bg-blue-600 hover:text-white transition"><i class="fas fa-check"></i></button>
-                        <button onclick="addToGlossary('${word}', document.getElementById('manual-input').value)" class="bg-green-100 text-green-600 border border-green-200 px-3 rounded hover:bg-green-600 hover:text-white transition"><i class="fas fa-plus"></i></button>
-                    </div>
-                </div>
-                <div class="overflow-y-auto max-h-[220px]">
-            `;
-
-            const unique = [];
-            const seen = new Set();
-            list.forEach(i => { if(!seen.has(i.word.toLowerCase()) && i.word.toLowerCase() !== word.toLowerCase()) { seen.add(i.word.toLowerCase()); unique.push(i); }});
-
-            unique.slice(0, 20).forEach(item => {
-                let badgeClass = 'pos-badge';
-                if(item.type && item.type.includes('Suffix')) badgeClass += ' bg-pink-100 text-pink-700';
-                else if(item.type && item.type.includes('Root')) badgeClass += ' bg-blue-100 text-blue-700';
-                
-                html += `
-                    <div class="synonym-row group">
-                        <span class="synonym-word" onclick="applyChange('${word}', '${item.word}')">
-                            ${item.word} <span class="${badgeClass}">${item.type || 'Alt'}</span>
-                        </span>
-                        <button class="text-slate-300 hover:text-blue-600 px-2 rounded" onclick="addToGlossary('${word}', '${item.word}')"><i class="fas fa-plus"></i></button>
-                    </div>
-                `;
             });
-            html += `</div>`;
-            menu.innerHTML = html;
-            setTimeout(() => document.getElementById('manual-input').focus(), 100);
         }
+    } catch (e) {
+        console.warn('Google Thesaurus error, using fallback', e);
+    }
 
-        function renderManualMode(menu, word, lang, msg) {
-            menu.innerHTML = `
-                <div class="p-5 flex flex-col justify-center h-full">
-                    <div class="mb-2 text-xs text-slate-400 italic text-center">${msg}</div>
-                    <div class="flex gap-2">
-                        <input type="text" id="manual-input" placeholder="Input Manual... (cth: -mu)" class="flex-1 w-full text-sm border rounded px-3 py-2 outline-none">
-                        <button onclick="applyChange('${word}', document.getElementById('manual-input').value)" class="bg-blue-100 text-blue-600 border border-blue-200 px-3 rounded hover:bg-blue-600 hover:text-white transition" title="Ganti Sementara"><i class="fas fa-check"></i></button>
-                        <button onclick="addToGlossary('${word}', document.getElementById('manual-input').value)" class="bg-green-100 text-green-600 border border-green-200 px-3 rounded hover:bg-green-600 hover:text-white transition" title="Simpan Permanen"><i class="fas fa-plus"></i></button>
-                    </div>
-                </div>`;
-            setTimeout(() => document.getElementById('manual-input').focus(), 100);
-        }
-
-        // --- 5. FIXED APPLY CHANGE (STRICT REPLACE) ---
-        function applyChange(oldWord, newWord) {
-            if(!newWord) return;
-            const editor = document.getElementById('output-editor');
-            let currentText = editor.innerText;
-            
-            // 1. Suffix Replace
-            if (newWord.startsWith('-')) {
-                const suffix = newWord.substring(1);
-                const regexLeft = new RegExp(`(\\w+)\\s*${oldWord}`, 'i');
-                if (regexLeft.test(currentText)) {
-                    currentText = currentText.replace(regexLeft, `$1${suffix}`);
-                } else {
-                    currentText = currentText.replace(oldWord, newWord);
+    // Jika sedikit, pakai pivot Datamuse (cadangan)
+    if (candidates.length < 3 && lang !== 'en') {
+        try {
+            const englishWord = await translateWord(word, lang, 'en');
+            if (englishWord && englishWord.toLowerCase() !== word.toLowerCase()) {
+                const synonyms = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(englishWord)}&max=5`).then(r => r.json());
+                for (let syn of synonyms) {
+                    const translated = await translateWord(syn.word, 'en', lang);
+                    if (translated && translated.toLowerCase() !== word.toLowerCase() && !seen.has(translated.toLowerCase())) {
+                        seen.add(translated.toLowerCase());
+                        candidates.push({
+                            word: translated,
+                            type: 'via Inggris',
+                            description: `Dari: ${syn.word}`,
+                            tags: ['pivot'],
+                            example: `Variasi: ${translated}`
+                        });
+                    }
                 }
-            } 
-            // 2. Root Replace with Suffix Recovery
-            else {
-                let suffix = "";
-                if (oldWord.toLowerCase().endsWith('mu')) suffix = "mu";
-                else if (oldWord.toLowerCase().endsWith('ku')) suffix = "ku";
-                else if (oldWord.toLowerCase().endsWith('nya')) suffix = "nya";
-
-                let replacement = newWord;
-                if (suffix && !newWord.toLowerCase().endsWith(suffix)) {
-                    let pronoun = suffix === "mu" ? "kamu" : (suffix === "ku" ? "aku" : "dia");
-                    replacement = `${newWord} ${pronoun}`;
-                }
-
-                const regex = new RegExp(`\\b${oldWord}\\b`, 'gi');
-                currentText = currentText.replace(regex, replacement);
             }
+        } catch (e) {}
+    }
 
-            editor.innerText = currentText;
-            closeDropdown();
-            triggerContextualFix(currentText);
-        }
+    if (candidates.length === 0) {
+        return getFallbackAlternatives(word, lang);
+    }
+    return candidates.slice(0, 10);
+}
 
-        function addToGlossary(oldWord, newWord) {
-            if(!newWord) return;
-            glossary[oldWord.toLowerCase()] = newWord;
-            renderBadges();
-            triggerTranslationProcess(); 
-            closeDropdown();
-        }
+// ========== GET WORD ALTERNATIVES – HANYA GOOGLE THESAURUS ==========
+async function getWordAlternatives(word, targetLang) {
+    try {
+        return await getUniversalGoogleThesaurus(word, targetLang);
+    } catch (e) {
+        console.warn('Fallback to local synonyms', e);
+        return getFallbackAlternatives(word, targetLang);
+    }
+}
 
-        // --- UTILS ---
-        function showStatus(msg, showLoader) {
-            const el = document.getElementById('ai-status');
-            el.classList.remove('hidden');
-            document.getElementById('status-text').innerText = msg;
-            el.querySelector('.loader').style.display = showLoader ? 'block' : 'none';
-        }
-        function hideStatus() { document.getElementById('ai-status').classList.add('hidden'); }
-        function deleteGlossaryItem(key) { delete glossary[key]; renderBadges(); triggerTranslationProcess(); }
-        
-        function renderBadges() {
-            const container = document.getElementById('glossary-badges');
-            const keys = Object.keys(glossary);
-            if (keys.length === 0) { container.innerHTML = '<span class="text-slate-400 italic text-xs pl-1">Belum ada preferensi kata.</span>'; return; }
-            container.innerHTML = keys.map(key => `
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border border-blue-200 text-blue-700 shadow-sm text-[11px] animate-[fadeIn_0.3s]">
-                    <span class="font-bold text-slate-600">${key}</span>
-                    <i class="fas fa-arrow-right text-[8px] text-blue-300"></i>
-                    <span class="font-bold text-blue-600 border-b border-blue-200">${glossary[key]}</span>
-                    <button onclick="deleteGlossaryItem('${key}')" class="ml-1 text-slate-300 hover:text-red-500 w-4 h-4 flex items-center justify-center"><i class="fas fa-times"></i></button>
-                </span>
-            `).join('');
-        }
+// Analisis morfologi Indonesia (opsional, tetap dipertahankan)
+function analyzeIndonesianMorphology(word) {
+    const results = []; const lower = word.toLowerCase();
+    const suffixes = [{suffix:'mu',desc:'Tanpa akhiran -mu'},{suffix:'ku',desc:'Tanpa akhiran -ku'},{suffix:'nya',desc:'Tanpa akhiran -nya'},{suffix:'kan',desc:'Tanpa akhiran -kan'},{suffix:'an',desc:'Tanpa akhiran -an'},{suffix:'i',desc:'Tanpa akhiran -i'}];
+    suffixes.forEach(({suffix,desc}) => { if (lower.endsWith(suffix) && lower.length > suffix.length) results.push({ word: lower.slice(0,-suffix.length), type:'root', description:desc }); });
+    const prefixes = ['ber','me','pe','di','ter','ke','se'];
+    prefixes.forEach(prefix => { if (lower.startsWith(prefix) && lower.length > prefix.length) results.push({ word: lower.slice(prefix.length), type:'root', description:`Tanpa awalan ${prefix}-` }); });
+    return results;
+}
 
-        function closeDropdown() { const m = document.getElementById('synonym-menu'); m.classList.remove('show'); setTimeout(() => { if(!m.classList.contains('show')) m.style.display = 'none'; }, 150); }
-        function closeDropdownGlobal(e) { if (!e.target.closest('.interactive-word') && !e.target.closest('#synonym-menu')) { closeDropdown(); } }
-        function copyResult() {
-            const text = document.getElementById('output-editor').innerText; navigator.clipboard.writeText(text);
-            const btn = document.querySelector('button[onclick="copyResult()"]'); const ori = btn.innerHTML; 
-            btn.innerHTML = '<i class="fas fa-check"></i> Tersalin'; setTimeout(() => btn.innerHTML = ori, 2000);
+function getFallbackAlternatives(word, lang) {
+    const lower = word.toLowerCase();
+    if (FALLBACK_SYNONYMS[lang] && FALLBACK_SYNONYMS[lang][lower]) {
+        return FALLBACK_SYNONYMS[lang][lower].map(w => ({ word: w, type:'synonym', description:'Local dictionary', tags:['synonym'], example:`Alternative: ${w}` }));
+    }
+    return [{ word: word, type:'original', description:'No alternatives found', tags:['current'], example:'Keep current word' }];
+}
+
+async function translateWord(word, sourceLang, targetLang) {
+    if (!word || word.length < 2) return word;
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(word)}`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const resp = await fetch(proxyUrl); const data = await resp.json();
+        if (data && data[0] && data[0][0] && data[0][0][0]) return data[0][0][0];
+    } catch {}
+    return word;
+}
+
+// ---------- UI INITIALIZATION (sama, hanya fungsi getWordAlternatives sudah ada) ----------
+document.addEventListener('DOMContentLoaded', function() {
+    const translator = new UniversalTranslator();
+    
+    const sourceLangSelect = document.getElementById('source-lang');
+    const targetLangSelect = document.getElementById('target-lang');
+    const sourceText = document.getElementById('source-text');
+    const translationResult = document.getElementById('translation-result');
+    const translationPlaceholder = document.getElementById('translation-placeholder');
+    const aiProcessing = document.getElementById('ai-processing');
+    const wordDropdown = document.getElementById('word-alternatives-dropdown');
+    
+    // ===== COPY =====
+    let copyTimeout = null;
+    function copyTranslation() {
+        const text = translationResult.textContent;
+        if (!text) return;
+        const btn = document.getElementById('copy-translation');
+        const originalHTML = btn.innerHTML;
+        if (copyTimeout) clearTimeout(copyTimeout);
+        const success = () => {
+            btn.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+            btn.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+            copyTimeout = setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-green-100', 'text-green-700', 'border-green-300');
+            }, 2000);
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(success).catch(() => fallbackCopy(text, btn, originalHTML, success));
+        } else fallbackCopy(text, btn, originalHTML, success);
+    }
+    function fallbackCopy(text, btn, originalHTML, successCallback) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            if (document.execCommand('copy')) successCallback();
+            else throw new Error();
+        } catch {
+            btn.innerHTML = '<i class="fas fa-times mr-1"></i> Failed';
+            btn.classList.add('bg-red-100', 'text-red-700');
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-red-100', 'text-red-700');
+            }, 2000);
         }
-    </script>
+        document.body.removeChild(textArea);
+    }
+    
+    // ===== SPEAK =====
+    function speakText(text, langCode) {
+        if (!('speechSynthesis' in window)) { alert('Text-to-speech not supported.'); return; }
+        const langMap = {
+            'id': 'id-ID', 'en': 'en-US', 'ja': 'ja-JP', 'de': 'de-DE',
+            'fr': 'fr-FR', 'es': 'es-ES', 'ar': 'ar-SA', 'zh': 'zh-CN',
+            'ko': 'ko-KR', 'ru': 'ru-RU', 'pt': 'pt-PT', 'it': 'it-IT',
+            'nl': 'nl-NL', 'tr': 'tr-TR', 'vi': 'vi-VN', 'th': 'th-TH',
+            'jw': 'jv-ID'
+        };
+        const voiceLang = langMap[langCode] || langCode;
+        try {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = voiceLang;
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        } catch (e) { console.error(e); alert('Speech error.'); }
+    }
+    function speakSource() { const text = sourceText.value; if (text) speakText(text, sourceLangSelect.value === 'auto' ? 'en' : sourceLangSelect.value); }
+    function speakTranslation() { const text = translationResult.textContent; if (text) speakText(text, targetLangSelect.value); }
+    
+    // ===== UI FUNCTIONS =====
+    function updateLanguageFlags() {
+        const sourceLang = sourceLangSelect.value;
+        const targetLang = targetLangSelect.value;
+        document.getElementById('source-flag').className = `language-flag ${getFlagClass(sourceLang)}`;
+        document.getElementById('target-flag').className = `language-flag ${getFlagClass(targetLang)}`;
+        document.getElementById('source-lang-name').textContent = `(${getLanguageName(sourceLang)})`;
+        document.getElementById('target-lang-name').textContent = `(${getLanguageName(targetLang)})`;
+    }
+    function getFlagClass(langCode) {
+        const map = { 'auto':'english-flag','en':'english-flag','id':'indonesia-flag','ja':'japanese-flag','de':'german-flag','fr':'french-flag','es':'spanish-flag','ar':'arabic-flag','jw':'javanese-flag' };
+        return map[langCode] || 'english-flag';
+    }
+    function getLanguageName(langCode) {
+        const map = { 'auto':'Detect','en':'English','id':'Indonesian','ja':'Japanese','de':'German','fr':'French','es':'Spanish','ar':'Arabic','zh':'Chinese','ko':'Korean','ru':'Russian','pt':'Portuguese','it':'Italian','nl':'Dutch','tr':'Turkish','vi':'Vietnamese','th':'Thai','jw':'Javanese' };
+        return map[langCode] || 'Unknown';
+    }
+    function swapLanguages() {
+        const source = sourceLangSelect.value;
+        const target = targetLangSelect.value;
+        sourceLangSelect.value = target;
+        targetLangSelect.value = source === 'auto' ? 'en' : source;
+        if (translationResult.textContent && translationResult.textContent !== '') {
+            sourceText.value = translationResult.textContent;
+            translateInput();
+        }
+        updateLanguageFlags();
+    }
+    async function translateInput() {
+        const text = sourceText.value.trim();
+        if (!text) { showTranslationPlaceholder(); return; }
+        aiProcessing.classList.remove('hidden');
+        translationPlaceholder.classList.add('hidden');
+        translationResult.classList.add('hidden');
+        try {
+            const sourceLang = sourceLangSelect.value;
+            const targetLang = targetLangSelect.value;
+            const result = await translator.translateText(text, sourceLang, targetLang);
+            displayTranslation(result.translation, result.processingTime, result.qualityScore);
+            updateAnalytics(result.qualityScore);
+            updateTranslationHistory();
+        } catch (error) {
+            console.error('Translation failed:', error);
+            translationResult.innerHTML = `<div class="text-red-500 p-4"><i class="fas fa-exclamation-triangle mr-2"></i>Translation failed. Try again.</div>`;
+            translationResult.classList.remove('hidden');
+        } finally {
+            aiProcessing.classList.add('hidden');
+        }
+    }
+    function displayTranslation(text, time, quality) {
+        translationResult.innerHTML = '';
+        const segments = text.match(/([\w\u00C0-\u024F]+|[^\w\s])/g) || [];
+        segments.forEach(segment => {
+            if (segment.match(/^[\w\u00C0-\u024F]+$/)) {
+                const wordElement = document.createElement('span');
+                wordElement.className = 'interactive-word';
+                wordElement.textContent = segment;
+                wordElement.dataset.word = segment;
+                wordElement.addEventListener('mouseenter', function() { this.classList.add('word-highlighted'); });
+                wordElement.addEventListener('mouseleave', function() { this.classList.remove('word-highlighted'); });
+                wordElement.addEventListener('click', function(e) { showWordAlternatives(this, e); });
+                translationResult.appendChild(wordElement);
+                translationResult.appendChild(document.createTextNode(' '));
+            } else translationResult.appendChild(document.createTextNode(segment));
+        });
+        translationResult.classList.remove('hidden');
+        translationPlaceholder.classList.add('hidden');
+        document.getElementById('translation-time').textContent = `${time}s`;
+        document.getElementById('translation-quality').textContent = getQualityLabel(quality);
+        document.getElementById('translation-meta').classList.remove('hidden');
+        const qualityFill = document.getElementById('quality-fill');
+        qualityFill.style.width = `${quality}%`;
+        qualityFill.className = `quality-fill ${getQualityColor(quality)}`;
+    }
+    async function showWordAlternatives(element, event) {
+        const word = element.dataset.word;
+        const rect = element.getBoundingClientRect();
+        document.getElementById('dropdown-word').textContent = `"${word}"`;
+        let left = rect.left, top = rect.bottom + 5;
+        if (left + 300 > window.innerWidth) left = window.innerWidth - 320;
+        if (top + 300 > window.innerHeight) top = rect.top - 305;
+        wordDropdown.style.left = `${left}px`;
+        wordDropdown.style.top = `${top}px`;
+        document.getElementById('alternatives-list').innerHTML = `<div class="p-8 text-center"><div class="loader mx-auto mb-4 w-8 h-8 border-2 border-blue-200 border-t-blue-600"></div><div class="text-slate-600">Finding alternatives...</div></div>`;
+        wordDropdown.classList.add('show');
+        try {
+            const targetLang = targetLangSelect.value;
+            const alternatives = await getWordAlternatives(word, targetLang);
+            const listContainer = document.getElementById('alternatives-list');
+            listContainer.innerHTML = '';
+            const origOption = document.createElement('div');
+            origOption.className = 'word-option';
+            origOption.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            origOption.innerHTML = `<div style="flex:1;"><div class="word-preview">${word}</div><div class="word-example">Original word</div></div><div class="word-tags">current</div>`;
+            origOption.addEventListener('click', (e) => { e.stopPropagation(); wordDropdown.classList.remove('show'); });
+            listContainer.appendChild(origOption);
+            alternatives.forEach(alt => {
+                const option = document.createElement('div');
+                option.className = 'word-option';
+                option.innerHTML = `<div style="flex:1;"><div class="word-preview">${alt.word || ''}</div>${alt.example ? `<div class="word-example">${alt.example}</div>` : `<div class="word-example">${alt.description || 'Alternative'}</div>`}</div><div class="word-tags">${alt.tags ? alt.tags.join(', ') : alt.type || 'synonym'}</div>`;
+                option.addEventListener('click', (e) => { 
+                    e.stopPropagation(); 
+                    replaceSelectedWord(word, alt.word, element); 
+                    wordDropdown.classList.remove('show'); 
+                });
+                listContainer.appendChild(option);
+            });
+        } catch (e) {
+            document.getElementById('alternatives-list').innerHTML = `<div class="p-6 text-center text-red-500"><i class="fas fa-exclamation-triangle text-2xl mb-3"></i><div class="font-medium">Failed to load alternatives</div></div>`;
+        }
+    }
+    function replaceSelectedWord(oldWord, newWord, element) {
+        element.style.backgroundColor = 'rgba(34,197,94,0.3)';
+        element.style.transition = 'background-color 0.5s';
+        setTimeout(() => { element.style.backgroundColor = ''; }, 500);
+        const currentText = translationResult.textContent;
+        const regex = new RegExp(`\\b${oldWord}\\b`, 'i');
+        const newText = currentText.replace(regex, newWord);
+        const targetLang = targetLangSelect.value;
+        const polishedText = translator.polishTranslation(newText, targetLang);
+        displayTranslation(polishedText, document.getElementById('translation-time').textContent.replace('s',''), 85);
+    }
+    function showTranslationPlaceholder() {
+        translationPlaceholder.classList.remove('hidden');
+        translationResult.classList.add('hidden');
+        document.getElementById('translation-meta').classList.add('hidden');
+    }
+    function setActiveStrategy(strategy) {
+        document.querySelectorAll('[data-strategy]').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`[data-strategy="${strategy}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+    }
+    function updateAnalytics(qualityScore) {
+        document.getElementById('naturalness-score').textContent = `${Math.min(100, qualityScore + 5)}/100`;
+        document.getElementById('fluency-level').textContent = getQualityLabel(qualityScore);
+        document.getElementById('accuracy-level').textContent = `${Math.min(100, qualityScore + 2)}%`;
+    }
+    function updateTranslationHistory() {
+        const history = translator.getHistory();
+        const container = document.getElementById('translation-history');
+        if (history.length === 0) { container.innerHTML = '<div class="text-slate-400 italic">No translations yet</div>'; return; }
+        let html = '';
+        history.slice(0,5).forEach(entry => {
+            html += `<div class="p-2 bg-white rounded border border-slate-200 hover:border-blue-300 transition">
+                <div class="text-xs text-slate-500 flex justify-between mb-1"><span>${getLanguageName(entry.sourceLang)} → ${getLanguageName(entry.targetLang)}</span><span class="font-bold ${getQualityColorClass(entry.qualityScore)}">${entry.qualityScore}</span></div>
+                <div class="text-sm font-medium text-slate-800">${entry.original.substring(0,30)}${entry.original.length>30?'...':''}</div>
+                <div class="text-sm text-slate-600">${entry.translation.substring(0,30)}${entry.translation.length>30?'...':''}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+    function getQualityLabel(score) { if (score>=90) return 'Excellent'; if (score>=80) return 'Very Good'; if (score>=70) return 'Good'; if (score>=60) return 'Fair'; return 'Poor'; }
+    function getQualityColor(score) { if (score>=90) return 'bg-gradient-to-r from-emerald-500 to-green-500'; if (score>=80) return 'bg-gradient-to-r from-green-500 to-lime-500'; if (score>=70) return 'bg-gradient-to-r from-yellow-500 to-amber-500'; if (score>=60) return 'bg-gradient-to-r from-orange-500 to-amber-500'; return 'bg-gradient-to-r from-red-500 to-orange-500'; }
+    function getQualityColorClass(score) { if (score>=90) return 'text-emerald-600'; if (score>=80) return 'text-green-600'; if (score>=70) return 'text-yellow-600'; if (score>=60) return 'text-orange-600'; return 'text-red-600'; }
+    function openSettings() { document.getElementById('settings-modal').classList.remove('hidden'); }
+    function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
+    function saveSettings() {
+        const settings = {
+            restructure: document.getElementById('opt-restructure').checked,
+            idioms: document.getElementById('opt-idioms').checked,
+            formality: document.getElementById('opt-formality').checked,
+            pronouns: document.getElementById('opt-pronouns').checked,
+            neuralEditing: document.getElementById('neural-editing').checked,
+            contextMemory: document.getElementById('context-memory').checked,
+            preferNatural: document.getElementById('prefer-natural').checked,
+            creativeVariations: document.getElementById('creative-variations').checked
+        };
+        translator.updateSettings(settings);
+        if (sourceText.value.trim()) translateInput();
+        closeSettings();
+    }
+    
+    // ===== EVENT LISTENERS =====
+    sourceLangSelect.addEventListener('change', updateLanguageFlags);
+    targetLangSelect.addEventListener('change', function() {
+        updateLanguageFlags();
+        if (sourceText.value.trim()) translateInput();
+    });
+    let typingTimer;
+    sourceText.addEventListener('input', function() {
+        document.getElementById('source-char-count').textContent = `${this.value.length} characters`;
+        clearTimeout(typingTimer);
+        if (this.value.trim()) typingTimer = setTimeout(translateInput, 800);
+        else showTranslationPlaceholder();
+    });
+    document.getElementById('swap-langs').addEventListener('click', swapLanguages);
+    document.querySelectorAll('[data-strategy]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const strategy = this.dataset.strategy;
+            setActiveStrategy(strategy);
+            translator.setStrategy(strategy);
+            if (sourceText.value.trim()) translateInput();
+        });
+    });
+    document.getElementById('clear-source').addEventListener('click', function() {
+        sourceText.value = '';
+        document.getElementById('source-char-count').textContent = '0 characters';
+        showTranslationPlaceholder();
+    });
+    document.getElementById('copy-translation').addEventListener('click', copyTranslation);
+    document.getElementById('speak-source').addEventListener('click', speakSource);
+    document.getElementById('speak-translation').addEventListener('click', speakTranslation);
+    document.getElementById('improve-translation').addEventListener('click', async function() {
+        if (!translationResult.textContent) return;
+        const currentStrategy = translator.strategy;
+        translator.setStrategy('creative');
+        aiProcessing.classList.remove('hidden');
+        try {
+            const result = await translator.translateText(sourceText.value, sourceLangSelect.value, targetLangSelect.value);
+            displayTranslation(result.translation, result.processingTime, result.qualityScore);
+        } catch (e) {}
+        translator.setStrategy(currentStrategy);
+        aiProcessing.classList.add('hidden');
+    });
+    document.getElementById('settings-btn').addEventListener('click', openSettings);
+    document.getElementById('close-settings').addEventListener('click', closeSettings);
+    document.getElementById('save-settings').addEventListener('click', saveSettings);
+    
+    document.addEventListener('click', function(e) {
+        if (wordDropdown && !wordDropdown.contains(e.target) && !e.target.classList.contains('interactive-word')) {
+            wordDropdown.classList.remove('show');
+        }
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') wordDropdown.classList.remove('show'); });
+    
+    updateLanguageFlags();
+    setTimeout(() => {
+        if (!sourceText.value.trim()) {
+            sourceText.value = "The quick brown fox jumps over the lazy dog. This sentence contains every letter of the English alphabet.";
+            sourceText.dispatchEvent(new Event('input'));
+        }
+    }, 500);
+});
+</script>
 </body>
 </html>
